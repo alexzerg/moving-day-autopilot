@@ -8,17 +8,20 @@
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:live": "tsx src/live-smoke.ts"
+    "test:live": "tsx src/live-smoke.ts",
+    "build:agentcore": "node build-agentcore.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
     "@moving-day/contracts": "*",
     "@strands-agents/sdk": "^1.15.0",
+    "bedrock-agentcore": "^0.3.0",
     "fastify": "^5.5.0",
-    "zod": "^4.1.5"
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "esbuild": "^0.28.2",
     "tsx": "^4.20.5",
     "typescript": "~5.9.2",
     "vitest": "^3.2.4"

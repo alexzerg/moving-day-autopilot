@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
+  "name": "movingday",
+  "version": 1,
+  "managedBy": "CDK",
+  "tags": {
+    "agentcore:created-by": "agentcore-cli",
+    "agentcore:project-name": "movingday"
+  },
+  "runtimes": [
+    {
+      "name": "moving_day_agent",
+      "build": "Container",
+      "entrypoint": "dist/agentcore.js",
+      "codeLocation": "services/agent/",
+      "runtimeVersion": "NODE_22",
+      "networkMode": "PUBLIC",
+      "protocol": "HTTP",
+      "environmentVariables": {
+        "AWS_REGION": "us-east-1",
+        "BEDROCK_MODEL_ID": "us.amazon.nova-2-lite-v1:0"
+      }
+    }
+  ],
+  "memories": [
+    {
+      "name": "moving_day_agentMemory",
+      "eventExpiryDuration": 30,
+      "strategies": []
+    }
+  ],
+  "knowledgeBases": [],
+  "credentials": [],
+  "evaluators": [],
+  "onlineEvalConfigs": [],
+  "agentCoreGateways": [],
+  "policyEngines": [],
+  "configBundles": [],
+  "abTests": [],
+  "harnesses": [],
+  "datasets": [],
+  "payments": []
+}

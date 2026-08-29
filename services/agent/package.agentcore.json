@@ -1,0 +1,16 @@
+{
+  "name": "moving-day-agentcore-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@strands-agents/sdk": "1.15.0",
+    "bedrock-agentcore": "0.3.0",
+    "zod": "4.5.2"
+  },
+  "overrides": {
+    "bedrock-agentcore": {
+      "@strands-agents/sdk": "$@strands-agents/sdk"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+*
+!package.agentcore.json
+!dist/agentcore.js
+!dist/agentcore.js.map
+!Dockerfile

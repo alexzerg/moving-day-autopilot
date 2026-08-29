@@ -1,7 +1,8 @@
 import { Agent, BedrockModel } from '@strands-agents/sdk';
-import { movingTools } from './tools.js';
+import { MoveStore, moveStore } from './store.js';
+import { createMovingTools } from './tools.js';
 
-export function createMovingAgent() {
+export function createMovingAgent(store: MoveStore = moveStore) {
   const model = new BedrockModel({
     region: process.env.AWS_REGION ?? 'us-east-1',
     modelId: process.env.BEDROCK_MODEL_ID ?? 'us.amazon.nova-2-lite-v1:0',
@@ -24,6 +25,6 @@ Rules:
 - After execution, always call verify_move_completion and report failed, blocked, and verified work separately.
 - Never call the move complete while any action is blocked or failed. Say that agent work is verified and list the remaining household tasks.
 - The provider systems are deterministic demo adapters. Never claim that real-world accounts were modified.`,
-    tools: movingTools,
+    tools: createMovingTools(store),
   });
 }
