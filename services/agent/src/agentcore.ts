@@ -41,6 +41,8 @@ const app = new BedrockAgentCoreApp({
             yield { data: event.event.delta.text };
           }
         }
+        const encodedState = Buffer.from(JSON.stringify(active.store.snapshot())).toString('base64url');
+        yield { data: `\n__MOVE_STATE__${encodedState}` };
       } catch (error) {
         active.agent.loadSnapshot(snapshot);
         throw error;

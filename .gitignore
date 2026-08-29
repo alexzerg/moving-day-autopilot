@@ -12,3 +12,4 @@ test-results
 agentcore/.cli
 agentcore/.env.local
 agentcore/cdk/cdk.out
+.env*

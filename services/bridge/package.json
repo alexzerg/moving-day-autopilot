@@ -1,18 +1,20 @@
 {
-  "name": "@moving-day/contracts",
+  "name": "@moving-day/bridge",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^4.5.2"
+    "@aws-sdk/client-bedrock-agentcore": "3.1121.0",
+    "@vercel/oidc-aws-credentials-provider": "^3.3.5",
+    "express": "5.1.0"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
+    "@types/express": "5.0.3",
+    "@types/node": "24.3.0",
     "typescript": "~5.9.2",
     "vitest": "^3.2.6"
   }

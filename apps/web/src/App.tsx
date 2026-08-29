@@ -9,6 +9,7 @@ const kindIcon: Record<string, string> = {
 };
 
 const stageLabels = ['Discover', 'Plan', 'Decide', 'Execute', 'Verify'];
+const cloudMode = import.meta.env.VITE_AGENT_MODE === 'cloud';
 
 function addressLine(address: MoveState['moveCase']['oldAddress']) {
   return `${address.line1}, ${address.city}, ${address.region} ${address.postalCode}`;
@@ -84,7 +85,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="mark">↗</div><div><strong>Moving-Day Autopilot</strong><span>Jurisdiction-aware household cutover</span></div></div>
-        <div className="runtime"><i /> STRANDS AGENT · 6 TOOLS</div>
+        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 6 TOOLS' : 'LOCAL STRANDS AGENT · 6 TOOLS'}</div>
       </header>
 
       <section className="hero">
