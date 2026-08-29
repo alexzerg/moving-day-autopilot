@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { floridaJurisdictionPack } from '@moving-day/contracts';
 import type { MoveAction, MoveState, ProviderAccount } from '@moving-day/contracts';
-import { moveApi } from './api';
+import { AGENT_RESPONSE_EVENT, moveApi } from './api';
 import './App.css';
 
 const kindIcon: Record<string, string> = {
@@ -49,9 +50,15 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<string[]>(['Demo case ready. Ask the agent to discover address-linked services.']);
+  const [agentResponse, setAgentResponse] = useState('The cloud agent response will appear here after each operation.');
 
   const refresh = useCallback(async () => setState(await moveApi.state()), []);
   useEffect(() => { refresh().catch((reason: Error) => setError(reason.message)); }, [refresh]);
+  useEffect(() => {
+    const onResponse = (event: Event) => setAgentResponse((event as CustomEvent<string>).detail);
+    window.addEventListener(AGENT_RESPONSE_EVENT, onResponse);
+    return () => window.removeEventListener(AGENT_RESPONSE_EVENT, onResponse);
+  }, []);
 
   const run = useCallback(async (label: string, operation: () => Promise<unknown>) => {
     setBusy(true); setError(null);
@@ -85,7 +92,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="mark">↗</div><div><strong>Moving-Day Autopilot</strong><span>Jurisdiction-aware household cutover</span></div></div>
-        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 6 TOOLS' : 'LOCAL STRANDS AGENT · 6 TOOLS'}</div>
+        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 7 TOOLS' : 'LOCAL STRANDS AGENT · 7 TOOLS'}</div>
       </header>
 
       <section className="hero">
@@ -119,6 +126,11 @@ export default function App() {
             {state.accounts.length ? <div className="service-grid">{state.accounts.map((account) => <AccountCard key={account.id} account={account} />)}</div> : <div className="empty"><div className="scan-icon">⌕</div><strong>The agent has not inspected the household yet.</strong><span>Discovery uses a deterministic inbox and account-registry fixture.</span></div>}
           </article>
 
+          <article className="panel jurisdiction-card">
+            <div className="panel-title"><div><span className="eyebrow">SOURCE-AWARE JURISDICTION PACK</span><h2>United States · Florida</h2></div><span>v{floridaJurisdictionPack.version}</span></div>
+            <div className="jurisdiction-rules">{floridaJurisdictionPack.rules.map((rule) => <a key={rule.id} href={rule.sourceUrl} target="_blank" rel="noreferrer"><div><strong>{rule.title}</strong><span>{rule.classification} · checked {rule.checkedAt}</span></div><b>{rule.humanIdentityRequired ? 'Human ID' : 'Agent-ready'} ↗</b></a>)}</div>
+          </article>
+
           {state.actions.length > 0 && <article className="panel"><div className="panel-title"><div><span className="eyebrow">DEPENDENCY-AWARE PLAN</span><h2>Administrative cutover</h2></div><span>{state.actions.length} actions</span></div><div className="action-list">{state.actions.slice(0, 12).map((action) => <ActionRow key={action.id} action={action} />)}</div>{state.actions.length > 12 && <div className="more-actions">+ {state.actions.length - 12} additional verification and closeout actions</div>}</article>}
         </section>
 
@@ -129,6 +141,7 @@ export default function App() {
 
           <article className="panel next-card"><span className="eyebrow">AGENT CONTROL</span>{primary ? <><h2>{primary.label}</h2><p>Safe actions run automatically. Payments, identity and irreversible work stay gated.</p><button className="primary" disabled={busy} onClick={primary.run}>{busy ? 'Working…' : primary.label}</button></> : decision && !decision.selectedOption ? <><h2>Waiting for one decision</h2><p>Choose the internet trade-off above. Every other branch remains ready.</p></> : <><h2>{state.receipt ? 'Agent work verified' : 'Approved plan ready'}</h2><p>{state.receipt ? `${state.receipt.blockedActions} identity tasks remain for the household; every agent action was read back and classified.` : 'The agent now has the exact token required to execute.'}</p></>}<button className="reset" disabled={busy} onClick={() => run('Demo case reset.', moveApi.reset)}>Reset demo</button></article>
 
+          {cloudMode && <article className="panel transcript-card"><span className="eyebrow">LIVE AGENTCORE RESPONSE</span><p>{agentResponse}</p></article>}
           <article className="panel activity-card"><span className="eyebrow">AGENT ACTIVITY</span>{activity.map((item, index) => <div key={`${item}-${index}`}><i className={index === 0 ? 'live' : ''} /><span>{item}</span></div>)}</article>
         </aside>
       </div>

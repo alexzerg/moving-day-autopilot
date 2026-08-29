@@ -1,8 +1,16 @@
 import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
+import { floridaJurisdictionPack } from '@moving-day/contracts';
 import { MoveStore, moveStore } from './store.js';
 
 export function createMovingTools(store: MoveStore) {
+  const getJurisdictionPack = tool({
+    name: 'get_jurisdiction_pack',
+    description: 'Read the active jurisdiction pack, version, supported service categories, official sources, and human-identity boundaries.',
+    inputSchema: z.object({}),
+    callback: () => JSON.stringify(floridaJurisdictionPack),
+  });
+
   const discoverMoveServices = tool({
     name: 'discover_move_services',
     description: 'Discover address-linked household services from the deterministic demo inbox and account registry.',
@@ -45,7 +53,7 @@ export function createMovingTools(store: MoveStore) {
     callback: () => JSON.stringify(store.verifyMove()),
   });
 
-  return [discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, verifyMoveCompletion];
+  return [getJurisdictionPack, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, verifyMoveCompletion];
 }
 
 export const movingTools = createMovingTools(moveStore);

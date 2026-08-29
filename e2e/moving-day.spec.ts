@@ -6,7 +6,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('complete move cutover reaches a verified zero-gap receipt', async ({ page }) => {
-  await expect(page.getByText('STRANDS AGENT · 6 TOOLS')).toBeVisible();
+  await expect(page.getByText('STRANDS AGENT · 7 TOOLS')).toBeVisible();
   await page.getByRole('button', { name: 'Discover household services' }).click();
   await expect(page.locator('.service-card')).toHaveCount(11);
 

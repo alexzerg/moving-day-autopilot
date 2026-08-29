@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+<title id="title">Moving-Day Autopilot architecture</title>
+<desc id="desc">A Vercel interface invokes a session-isolated Strands agent in AWS AgentCore through short-lived OIDC credentials. The agent uses a Florida jurisdiction pack and provider tools, pauses for one human decision, executes the move and verifies a receipt.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbfa"/><stop offset="1" stop-color="#e7f2ef"/></linearGradient>
+  <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#193943"/><stop offset="1" stop-color="#0e2229"/></linearGradient>
+  <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8f4e5"/><stop offset="1" stop-color="#8fdfc4"/></linearGradient>
+  <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#17343d" stroke-opacity=".035"/></pattern>
+  <filter id="shadow" x="-15%" y="-20%" width="130%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#17343d" flood-opacity=".11"/></filter>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0l10 5-10 5z" fill="#16836d"/></marker>
+  <style>.s{font-family:Arial,Helvetica,sans-serif}.m{font-family:Menlo,Consolas,monospace}.hero{font-size:40px;font-weight:700;letter-spacing:-1.4px;fill:#152930}.sub{font-size:15px;fill:#687a80}.ey{font-size:10px;font-weight:700;letter-spacing:1.6px;fill:#16836d}.ct{font-size:18px;font-weight:700;fill:#162c33}.cc{font-size:12px;fill:#687a80}.tiny{font-size:9px;font-weight:700;letter-spacing:.5px;fill:#5d7076}.line{fill:none;stroke:#16836d;stroke-width:3;marker-end:url(#arrow)}.dash{fill:none;stroke:#16836d;stroke-width:2.5;stroke-dasharray:7 6;marker-end:url(#arrow)}</style>
+</defs>
+<rect width="1200" height="900" fill="url(#bg)"/><rect width="1200" height="900" fill="url(#grid)"/><circle cx="1090" cy="70" r="190" fill="#8fdfc4" opacity=".15"/>
+<g class="s">
+  <g transform="translate(60 42)"><rect width="40" height="40" rx="12" fill="#142b33"/><text x="11" y="29" font-size="24" fill="#b9f6df">↗</text><text x="54" y="16" class="ey">MOVING-DAY AUTOPILOT</text><text x="54" y="38" class="sub">Agents for Humans · Architecture</text></g>
+  <text x="60" y="128" class="hero">From “we’re moving” to verified cutover.</text>
+  <text x="60" y="158" class="sub">A jurisdiction-aware Strands agent that executes the administrative work and interrupts only for real decisions.</text>
+
+  <g filter="url(#shadow)" transform="translate(70 205)"><rect width="260" height="105" rx="20" fill="#fff" stroke="#d5e1e2"/><circle cx="44" cy="49" r="23" fill="#eef7f4"/><circle cx="44" cy="42" r="7" fill="#16836d"/><path d="M30 64c3-10 25-10 28 0" fill="none" stroke="#16836d" stroke-width="4" stroke-linecap="round"/><text x="80" y="43" class="ct">Household operator</text><text x="80" y="65" class="cc">One bounded provider decision</text><text x="80" y="85" class="tiny">APPROVAL · IDENTITY TASKS</text></g>
+
+  <g filter="url(#shadow)" transform="translate(455 200)"><rect width="675" height="115" rx="22" fill="#fff" stroke="#cddedf"/><text x="24" y="28" class="ey">VERCEL MULTI-SERVICE PROJECT</text><g transform="translate(22 43)"><rect width="280" height="50" rx="13" fill="#f2f7f6"/><text x="16" y="22" class="ct" font-size="16">React operator console</text><text x="16" y="40" class="cc">Live state · decisions · receipt</text></g><g transform="translate(326 43)"><rect width="327" height="50" rx="13" fill="url(#navy)"/><text x="16" y="22" class="ct" fill="#fff" font-size="16">OIDC invoke bridge</text><text x="16" y="40" class="cc" fill="#c9d9dc">No AWS keys · rate limited · state decoding</text></g></g>
+  <path d="M330 257h125" class="line"/>
+
+  <g filter="url(#shadow)" transform="translate(455 355)"><rect width="675" height="74" rx="20" fill="#fff6da" stroke="#ead18b"/><text x="22" y="28" class="ey" fill="#956814">SHORT-LIVED AWS FEDERATION</text><text x="22" y="52" class="ct" font-size="16">Vercel OIDC → exact runtime invoke role</text><rect x="496" y="20" width="155" height="34" rx="17" fill="#fff"/><text x="517" y="41" class="m" font-size="10" fill="#956814">NO ACCESS KEYS</text></g>
+  <path d="M793 315v40" class="line"/>
+  <path d="M793 429v38" class="line"/>
+
+  <g filter="url(#shadow)" transform="translate(70 470)"><rect width="1060" height="245" rx="27" fill="#fff" stroke="#cbdedf" stroke-width="1.5"/><text x="26" y="35" class="ey">AWS AGENTCORE RUNTIME · SESSION ISOLATED</text>
+    <g transform="translate(25 55)"><rect width="230" height="158" rx="18" fill="#eef7f4" stroke="#d4e5df"/><text x="18" y="30" class="ct" font-size="17">Jurisdiction pack</text><text x="18" y="54" class="cc">United States · Florida</text><text x="18" y="78" class="cc">Versioned official sources</text><text x="18" y="100" class="cc">Required vs recommended</text><text x="18" y="122" class="cc">Identity boundaries</text><text x="18" y="145" class="m" font-size="10" fill="#16836d">get_jurisdiction_pack</text></g>
+    <g transform="translate(275 55)"><rect width="280" height="158" rx="18" fill="url(#navy)"/><text x="18" y="30" class="ct" fill="#fff" font-size="17">Strands supervisor</text><text x="18" y="55" class="cc" fill="#c9d9dc">Amazon Nova 2 Lite</text><text x="18" y="79" class="cc" fill="#c9d9dc">Discovers and plans</text><text x="18" y="101" class="cc" fill="#c9d9dc">Pauses for one decision</text><text x="18" y="123" class="cc" fill="#c9d9dc">Executes and verifies</text><rect x="18" y="134" width="110" height="18" rx="9" fill="#294b56"/><text x="33" y="147" class="m" font-size="9" fill="#b9f6df">7 STRANDS TOOLS</text></g>
+    <g transform="translate(575 55)"><rect width="220" height="158" rx="18" fill="#f4f7f6" stroke="#d9e4e5"/><text x="18" y="30" class="ct" font-size="17">Session MoveStore</text><text x="18" y="55" class="cc">Move case</text><text x="18" y="77" class="cc">11 provider accounts</text><text x="18" y="99" class="cc">14 planned actions</text><text x="18" y="121" class="cc">Decision + approval token</text><text x="18" y="143" class="cc">Authoritative receipt</text></g>
+    <g transform="translate(815 55)"><rect width="220" height="158" rx="18" fill="url(#teal)" stroke="#8bcfb8"/><text x="18" y="30" class="ct" font-size="17">Provider tools</text><text x="18" y="55" class="cc" fill="#335b50">Electricity · water</text><text x="18" y="77" class="cc" fill="#335b50">Internet · insurance</text><text x="18" y="99" class="cc" fill="#335b50">Postal · employer</text><text x="18" y="121" class="cc" fill="#335b50">Finance · subscriptions</text><text x="18" y="143" class="m" font-size="10" fill="#0e694f">STATEFUL DEMO ADAPTERS</text></g>
+  </g>
+
+  <path d="M200 310v160" class="dash"/><path d="M925 715v46" class="line"/>
+  <g filter="url(#shadow)" transform="translate(250 770)"><rect width="700" height="86" rx="21" fill="url(#navy)"/><text x="23" y="28" class="ey" fill="#b9f6df">VERIFIED MOVE EXECUTION RECEIPT</text><text x="23" y="54" class="ct" fill="#fff" font-size="18">12 verified · 2 identity tasks · 0 failed · 0 service gaps</text><text x="23" y="74" class="cc" fill="#c9d9dc">Every provider action is read back and classified — never silently marked complete.</text><rect x="570" y="24" width="105" height="38" rx="19" fill="#b9f6df"/><text x="596" y="47" class="m" font-size="10" fill="#142b33">VERIFIED</text></g>
+  <text x="60" y="884" class="m" font-size="11" fill="#60767a">DISCOVER → PLAN → DECIDE → EXECUTE → VERIFY</text><text x="820" y="884" class="tiny">PUBLIC DEMO · NO JUDGE CREDENTIALS</text>
+</g>
+</svg>

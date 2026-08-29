@@ -6,7 +6,7 @@ import { moveStore } from './store.js';
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
 
-app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 6 }));
+app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 7 }));
 app.get('/api/demo/state', async () => moveStore.snapshot());
 app.post('/api/demo/reset', async () => moveStore.reset());
 app.post('/api/demo/discover', async () => moveStore.discoverServices());

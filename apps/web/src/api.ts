@@ -3,6 +3,7 @@ import type { DecisionRequest, MoveReceipt, MoveState } from '@moving-day/contra
 const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
 const SESSION_KEY = 'moving-day-agentcore-session';
+export const AGENT_RESPONSE_EVENT = 'moving-day-agent-response';
 
 function createSessionId() {
   return `moving-day-web-${crypto.randomUUID().replaceAll('-', '')}`;
@@ -41,7 +42,9 @@ async function invokeCloud(prompt: string) {
     const body = await response.json().catch(() => ({})) as { error?: string };
     throw new Error(body.error ?? `Cloud agent failed: ${response.status}`);
   }
-  return response.json() as Promise<{ text: string; state: MoveState; sessionId: string }>;
+  const result = await response.json() as { text: string; state: MoveState; sessionId: string };
+  window.dispatchEvent(new CustomEvent(AGENT_RESPONSE_EVENT, { detail: result.text }));
+  return result;
 }
 
 async function cloudState(prompt: string) {
