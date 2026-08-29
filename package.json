@@ -14,7 +14,8 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:agent-live": "npm run test:live --workspace @moving-day/agent"
   },
   "engines": {
     "node": ">=22"

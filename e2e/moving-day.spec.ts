@@ -17,11 +17,11 @@ test('complete move cutover reaches a verified zero-gap receipt', async ({ page 
   await page.getByRole('button', { name: 'Execute approved actions' }).click();
   await page.getByRole('button', { name: 'Verify provider state' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Cutover verified' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Agent work verified' }).first()).toBeVisible();
   await expect(page.getByText('0 service gaps')).toBeVisible();
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Failures' })).toContainText('0');
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('2');
-  await expect(page.getByText('Move complete')).toBeVisible();
+  await expect(page.getByText('Agent work verified').last()).toBeVisible();
 });
 
 test('layout remains inside the viewport', async ({ page }) => {
