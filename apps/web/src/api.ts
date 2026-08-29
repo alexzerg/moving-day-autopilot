@@ -32,7 +32,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function invokeCloud(prompt: string) {
+async function invokeCloud(prompt: string, publishResponse = true) {
   const response = await fetch('/api/agent', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -43,16 +43,16 @@ async function invokeCloud(prompt: string) {
     throw new Error(body.error ?? `Cloud agent failed: ${response.status}`);
   }
   const result = await response.json() as { text: string; state: MoveState; sessionId: string };
-  window.dispatchEvent(new CustomEvent(AGENT_RESPONSE_EVENT, { detail: result.text }));
+  if (publishResponse) window.dispatchEvent(new CustomEvent(AGENT_RESPONSE_EVENT, { detail: result.text }));
   return result;
 }
 
-async function cloudState(prompt: string) {
-  return (await invokeCloud(prompt)).state;
+async function cloudState(prompt: string, publishResponse = true) {
+  return (await invokeCloud(prompt, publishResponse)).state;
 }
 
 export const moveApi = CLOUD_MODE ? {
-  state: () => cloudState('Call get_move_state and return the current case without changing anything.'),
+  state: () => cloudState('Call get_move_state and return the current case without changing anything.', false),
   reset: () => {
     localStorage.setItem(SESSION_KEY, createSessionId());
     return cloudState('Call get_move_state and return the new untouched demo case without changing anything.');
