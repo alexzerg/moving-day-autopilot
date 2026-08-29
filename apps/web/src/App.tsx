@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { floridaJurisdictionPack } from '@moving-day/contracts';
 import type { MoveAction, MoveState, ProviderAccount } from '@moving-day/contracts';
 import { AGENT_RESPONSE_EVENT, moveApi, readLatestCloudState } from './api';
+import { downloadMovePacket } from './packet';
 import './App.css';
 
 const kindIcon: Record<string, string> = {
@@ -51,6 +52,10 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<string[]>(['Demo case ready. Ask the agent to discover address-linked services.']);
   const [agentResponse, setAgentResponse] = useState('The cloud agent response will appear here after each operation.');
+  const [draftReady, setDraftReady] = useState(false);
+  const [moveDraft, setMoveDraft] = useState({
+    moveDate: '', oldLine1: '', oldCity: '', oldPostal: '', newLine1: '', newCity: '', newPostal: '',
+  });
 
   const refresh = useCallback(async () => setState(await moveApi.state()), []);
   useEffect(() => { refresh().catch((reason: Error) => setError(reason.message)); }, [refresh]);
@@ -59,6 +64,19 @@ export default function App() {
     window.addEventListener(AGENT_RESPONSE_EVENT, onResponse);
     return () => window.removeEventListener(AGENT_RESPONSE_EVENT, onResponse);
   }, []);
+  useEffect(() => {
+    if (!state || draftReady) return;
+    setMoveDraft({
+      moveDate: state.moveCase.moveDate,
+      oldLine1: state.moveCase.oldAddress.line1,
+      oldCity: state.moveCase.oldAddress.city,
+      oldPostal: state.moveCase.oldAddress.postalCode,
+      newLine1: state.moveCase.newAddress.line1,
+      newCity: state.moveCase.newAddress.city,
+      newPostal: state.moveCase.newAddress.postalCode,
+    });
+    setDraftReady(true);
+  }, [state, draftReady]);
 
   const run = useCallback(async (label: string, operation: () => Promise<unknown>) => {
     setBusy(true); setError(null);
@@ -72,6 +90,23 @@ export default function App() {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally { setBusy(false); }
   }, [refresh]);
+
+  const configureMove = () => run('Move details configured.', () => moveApi.configure({
+    moveDate: moveDraft.moveDate,
+    oldAddress: { line1: moveDraft.oldLine1, city: moveDraft.oldCity, region: 'FL', postalCode: moveDraft.oldPostal, country: 'US' },
+    newAddress: { line1: moveDraft.newLine1, city: moveDraft.newCity, region: 'FL', postalCode: moveDraft.newPostal, country: 'US' },
+  }));
+
+  const exportPacket = async () => {
+    if (!state?.receipt) return;
+    setBusy(true); setError(null);
+    try {
+      await downloadMovePacket(state);
+      setActivity((items) => ['Move Packet downloaded: PDF, calendar, confirmations, drafts, tasks and receipt.', ...items].slice(0, 6));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally { setBusy(false); }
+  };
 
   const stage = currentStage(state);
   const decision = state?.decisions[0] ?? null;
@@ -95,7 +130,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="mark">↗</div><div><strong>Moving-Day Autopilot</strong><span>Jurisdiction-aware household cutover</span></div></div>
-        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 8 TOOLS' : 'LOCAL STRANDS AGENT · 8 TOOLS'}</div>
+        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 9 TOOLS' : 'LOCAL STRANDS AGENT · 9 TOOLS'}</div>
       </header>
 
       <section className="hero">
@@ -108,6 +143,20 @@ export default function App() {
         <div className="route-line"><i /><b>35 mi</b><i /></div>
         <div className="address right"><span>TO</span><strong>{addressLine(state.moveCase.newAddress)}</strong></div>
       </section>
+
+      {state.accounts.length === 0 && <section className="move-setup">
+        <div><span className="eyebrow">YOUR MOVE DETAILS</span><h2>Configure the cutover before discovery</h2><p>The public demo supports Florida-to-Florida moves. Change the synthetic values to see the plan recalculate around your date and route.</p></div>
+        <div className="setup-fields">
+          <label>Move date<input type="date" value={moveDraft.moveDate} onChange={(event) => setMoveDraft({ ...moveDraft, moveDate: event.target.value })} /></label>
+          <label>Old street<input value={moveDraft.oldLine1} onChange={(event) => setMoveDraft({ ...moveDraft, oldLine1: event.target.value })} /></label>
+          <label>Old city<input value={moveDraft.oldCity} onChange={(event) => setMoveDraft({ ...moveDraft, oldCity: event.target.value })} /></label>
+          <label>Old ZIP<input value={moveDraft.oldPostal} onChange={(event) => setMoveDraft({ ...moveDraft, oldPostal: event.target.value })} /></label>
+          <label>New street<input value={moveDraft.newLine1} onChange={(event) => setMoveDraft({ ...moveDraft, newLine1: event.target.value })} /></label>
+          <label>New city<input value={moveDraft.newCity} onChange={(event) => setMoveDraft({ ...moveDraft, newCity: event.target.value })} /></label>
+          <label>New ZIP<input value={moveDraft.newPostal} onChange={(event) => setMoveDraft({ ...moveDraft, newPostal: event.target.value })} /></label>
+          <button disabled={busy || !moveDraft.moveDate || !moveDraft.oldLine1 || !moveDraft.newLine1} onClick={configureMove}>Apply move details</button>
+        </div>
+      </section>}
 
       <section className="stages">
         {stageLabels.map((label, index) => <div key={label} className={index < stage ? 'done' : index === stage ? 'active' : ''}><span>{index < stage ? '✓' : index + 1}</span><b>{label}</b></div>)}
@@ -143,6 +192,8 @@ export default function App() {
           {state.receipt && identityTasks.length > 0 && <article className="panel identity-card"><span className="eyebrow">HOUSEHOLD HANDOFF</span><h2>Finish the identity-only steps</h2><p>The agent prepared these updates but cannot impersonate the household. Confirm each only after completing the provider identity check.</p>{identityTasks.map((action) => <button key={action.id} disabled={busy} onClick={() => run(`Household completed: ${action.label}`, () => moveApi.completeIdentity(action.id))}><div><strong>{action.label}</strong><span>{action.confirmation ?? 'Prepared and waiting for identity verification.'}</span></div><b>Confirm done</b></button>)}</article>}
 
           {state.receipt && <article className="panel receipt-card"><span className="eyebrow">MOVE EXECUTION RECEIPT</span><div className="verified-mark">✓</div><h2>{state.receipt.blockedActions === 0 ? 'Move complete' : 'Agent work verified'}</h2><p>{state.receipt.blockedActions === 0 ? `All ${state.receipt.verifiedActions} actions are verified. No household work remains.` : `${state.receipt.verifiedActions} actions verified; ${state.receipt.blockedActions} identity tasks remain with the household.`}</p><div className="receipt-grid"><span>Service gaps <b>{state.receipt.serviceGaps}</b></span><span>Failures <b>{state.receipt.failedActions}</b></span><span>Identity tasks <b>{state.receipt.blockedActions}</b></span><span>Confirmations <b>{state.receipt.confirmations.length}</b></span></div></article>}
+
+          {state.receipt && <article className="panel packet-card"><span className="eyebrow">TANGIBLE MOVE OUTPUT</span><h2>Download the Move Packet</h2><p>Everything the household needs after the agent finishes.</p><div className="packet-files"><span>PDF plan</span><span>Calendar .ics</span><span>Confirmations .csv</span><span>11 email drafts</span><span>Household tasks</span><span>JSON receipt</span></div><button disabled={busy} onClick={exportPacket}>Download Move Packet .zip</button></article>}
 
           <article className="panel next-card"><span className="eyebrow">AGENT CONTROL</span>{primary ? <><h2>{primary.label}</h2><p>Safe actions run automatically. Payments, identity and irreversible work stay gated.</p><button className="primary" disabled={busy} onClick={primary.run}>{busy ? 'Working…' : primary.label}</button></> : decision && !decision.selectedOption ? <><h2>Waiting for one decision</h2><p>Choose the internet trade-off above. Every other branch remains ready.</p></> : <><h2>{state.receipt?.blockedActions === 0 ? 'Move complete' : state.receipt ? 'Household handoff ready' : 'Approved plan ready'}</h2><p>{state.receipt?.blockedActions === 0 ? 'Every planned action is verified and no household work remains.' : state.receipt ? `${state.receipt.blockedActions} identity tasks are prepared above; complete them to close the move.` : 'The agent now has the exact token required to execute.'}</p></>}<button className="reset" disabled={busy} onClick={() => run('Demo case reset.', moveApi.reset)}>Reset demo</button></article>
 

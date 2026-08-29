@@ -1,5 +1,5 @@
-import { floridaJurisdictionPack } from '@moving-day/contracts';
-import type { DecisionRequest, MoveAction, MoveReceipt, MoveState } from '@moving-day/contracts';
+import { floridaJurisdictionPack, MoveCaseSchema } from '@moving-day/contracts';
+import type { Address, DecisionRequest, MoveAction, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
 import { demoAccounts, demoCase } from './fixtures.js';
 
 function offsetDate(date: string, days: number) {
@@ -14,13 +14,15 @@ function clone<T>(value: T): T {
 
 export class MoveStore {
   private state: MoveState;
+  private configuredCase: MoveCase;
 
-  constructor() {
+  constructor(moveCase: MoveCase = demoCase) {
+    this.configuredCase = clone(moveCase);
     this.state = this.initialState();
   }
 
   private initialState(): MoveState {
-    return { moveCase: clone(demoCase), accounts: [], actions: [], decisions: [], receipt: null };
+    return { moveCase: clone(this.configuredCase), accounts: [], actions: [], decisions: [], receipt: null };
   }
 
   reset() {
@@ -32,8 +34,24 @@ export class MoveStore {
     return clone(this.state);
   }
 
+  configureMoveCase(input: { moveDate: string; oldAddress: Address; newAddress: Address }) {
+    if (input.oldAddress.country !== 'US' || input.newAddress.country !== 'US' || input.oldAddress.region !== 'FL' || input.newAddress.region !== 'FL') {
+      throw new Error('The MVP supports moves within the United States / Florida jurisdiction pack only');
+    }
+    const configured = MoveCaseSchema.parse({
+      ...this.state.moveCase,
+      moveDate: input.moveDate,
+      oldAddress: input.oldAddress,
+      newAddress: input.newAddress,
+      jurisdiction: floridaJurisdictionPack.id,
+    });
+    this.configuredCase = clone(configured);
+    this.state = this.initialState();
+    return clone(configured);
+  }
+
   discoverServices() {
-    this.state.accounts = clone(demoAccounts);
+    this.state.accounts = clone(demoAccounts).map((account) => ({ ...account, address: clone(this.state.moveCase.oldAddress) }));
     return { discovered: this.state.accounts.length, accounts: this.snapshot().accounts };
   }
 

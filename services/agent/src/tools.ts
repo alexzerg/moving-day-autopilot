@@ -1,6 +1,6 @@
 import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
-import { floridaJurisdictionPack } from '@moving-day/contracts';
+import { AddressSchema, floridaJurisdictionPack } from '@moving-day/contracts';
 import { MoveStore, moveStore } from './store.js';
 
 export function createMovingTools(store: MoveStore) {
@@ -9,6 +9,13 @@ export function createMovingTools(store: MoveStore) {
     description: 'Read the active jurisdiction pack, version, supported service categories, official sources, and human-identity boundaries.',
     inputSchema: z.object({}),
     callback: () => JSON.stringify(floridaJurisdictionPack),
+  });
+
+  const configureMoveCase = tool({
+    name: 'configure_move_case',
+    description: 'Set the household move date, old address, and new address before discovery. The current MVP accepts Florida-to-Florida moves only.',
+    inputSchema: z.object({ moveDate: z.string().date(), oldAddress: AddressSchema, newAddress: AddressSchema }),
+    callback: (input) => JSON.stringify(store.configureMoveCase(input)),
   });
 
   const discoverMoveServices = tool({
@@ -60,7 +67,7 @@ export function createMovingTools(store: MoveStore) {
     callback: () => JSON.stringify(store.verifyMove()),
   });
 
-  return [getJurisdictionPack, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, recordIdentityCompletion, verifyMoveCompletion];
+  return [getJurisdictionPack, configureMoveCase, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, recordIdentityCompletion, verifyMoveCompletion];
 }
 
 export const movingTools = createMovingTools(moveStore);

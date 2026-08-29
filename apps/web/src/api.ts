@@ -1,4 +1,4 @@
-import type { DecisionRequest, MoveReceipt, MoveState } from '@moving-day/contracts';
+import type { Address, DecisionRequest, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
 
 const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
@@ -58,6 +58,10 @@ async function cloudState(prompt: string, publishResponse = true) {
 
 export const moveApi = CLOUD_MODE ? {
   state: () => cloudState('Call get_move_state and return the current case without changing anything.', false),
+  configure: async (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => {
+    const state = await cloudState(`Configure the move case with this exact JSON, then return the untouched configured state: ${JSON.stringify(input)}`);
+    return state.moveCase;
+  },
   reset: () => {
     localStorage.setItem(SESSION_KEY, createSessionId());
     return cloudState('Call get_move_state and return the new untouched demo case without changing anything.');
@@ -92,6 +96,9 @@ export const moveApi = CLOUD_MODE ? {
   },
 } : {
   state: () => request<MoveState>('/api/demo/state'),
+  configure: (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => request<MoveCase>('/api/demo/case', {
+    method: 'POST', body: JSON.stringify(input),
+  }),
   reset: () => request<MoveState>('/api/demo/reset', { method: 'POST' }),
   discover: () => request<{ discovered: number }>('/api/demo/discover', { method: 'POST' }),
   plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/demo/plan', { method: 'POST' }),

@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@moving-day/contracts": "^0.1.0",
+    "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

@@ -17,7 +17,8 @@ export function createMovingAgent(store: MoveStore = moveStore) {
 Your job is to complete the administrative cutover, not merely produce a checklist.
 
 Rules:
-- Start by reading the active jurisdiction pack, then discover services and build the move plan.
+- Start by reading the active jurisdiction pack. If the human supplied move details, configure the case before discovery; otherwise use the deterministic demo case.
+- Then discover services and build the move plan.
 - Execute automatic actions without interrupting the household.
 - Surface only bounded decisions that materially affect cost, service continuity, identity, or irreversible cancellation.
 - Never invent jurisdiction requirements. Use only configured jurisdiction packs.

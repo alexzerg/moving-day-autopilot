@@ -46,12 +46,25 @@ The bridge has no AWS access keys. Its IAM role can invoke only the exact Moving
 7. Read provider state back and classify every action as verified, blocked, or failed.
 8. Prepare identity-only tasks for explicit household completion.
 9. Record human evidence, verify again, and produce a final move receipt with no hidden work.
+10. Export a Move Packet containing a PDF schedule, calendar, confirmations, provider drafts, household tasks, and JSON receipt.
+
+## Tangible household output
+
+After verification, the browser generates a ZIP archive containing:
+
+- `move-packet.pdf` — dated provider schedule and execution summary;
+- `appointments.ics` — fourteen importable calendar events;
+- `provider-confirmations.csv` — action status and confirmation references;
+- `provider-email-drafts/` — one prepared message per discovered service;
+- `household-tasks.md` — identity actions and evidence;
+- `execution-receipt.json` — machine-readable final result.
 
 ## Strands tool surface
 
 | Tool | Responsibility |
 |---|---|
 | `get_jurisdiction_pack` | Read versioned rules, sources, supported services, and identity boundaries |
+| `configure_move_case` | Set the household's move date and Florida addresses |
 | `discover_move_services` | Discover the household's address-linked services |
 | `build_move_plan` | Build the dependency-safe administrative cutover |
 | `get_move_state` | Read the authoritative session state |
