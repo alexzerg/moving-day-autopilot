@@ -16,8 +16,10 @@ The deterministic Florida scenario produces a measurable result:
 11 address-linked services discovered
 14 dependency-aware actions planned
  1 bounded human decision
-12 provider actions executed and verified
- 2 identity-required household tasks preserved
+12 provider actions executed automatically
+ 2 identity-required tasks completed by the household
+14 total actions independently verified
+ 0 blocked actions remaining
  0 failed actions
  0 service gaps
 ```
@@ -42,7 +44,8 @@ The bridge has no AWS access keys. Its IAM role can invoke only the exact Moving
 5. Reject approval-gated actions without the exact human decision token.
 6. Execute authorized provider actions.
 7. Read provider state back and classify every action as verified, blocked, or failed.
-8. Produce a move execution receipt without hiding remaining household work.
+8. Prepare identity-only tasks for explicit household completion.
+9. Record human evidence, verify again, and produce a final move receipt with no hidden work.
 
 ## Strands tool surface
 
@@ -54,6 +57,7 @@ The bridge has no AWS access keys. Its IAM role can invoke only the exact Moving
 | `get_move_state` | Read the authoritative session state |
 | `record_move_decision` | Record the exact human provider choice and issue an approval token |
 | `execute_move_plan` | Execute authorized work and reject missing or stale approval |
+| `record_identity_completion` | Record an identity task only after explicit human evidence |
 | `verify_move_completion` | Read providers back and issue the execution receipt |
 
 ## Source-aware jurisdiction packs

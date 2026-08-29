@@ -16,16 +16,28 @@ const execution = await agent.invoke(
 console.log('\n--- EXECUTION TURN ---\n');
 console.log(String(execution));
 
-const state = moveStore.snapshot();
-if (!state.receipt) throw new Error('Agent did not produce a verification receipt');
-if (state.receipt.failedActions !== 0 || state.receipt.serviceGaps !== 0) {
-  throw new Error(`Unexpected receipt: ${JSON.stringify(state.receipt)}`);
+const executionState = moveStore.snapshot();
+if (!executionState.receipt) throw new Error('Agent did not produce a verification receipt');
+if (executionState.receipt.failedActions !== 0 || executionState.receipt.serviceGaps !== 0 || executionState.receipt.blockedActions !== 2) {
+  throw new Error(`Unexpected execution receipt: ${JSON.stringify(executionState.receipt)}`);
 }
-console.log('\n--- VERIFIED STATE ---\n');
+
+const completion = await agent.invoke(
+  'I explicitly completed update-postal with evidence USPS-ID-VERIFIED and update-bank with evidence BANK-ID-VERIFIED. Record both human completions, verify the move again, and report the final state.',
+);
+console.log('\n--- HOUSEHOLD COMPLETION TURN ---\n');
+console.log(String(completion));
+
+const finalState = moveStore.snapshot();
+if (!finalState.receipt) throw new Error('Agent did not produce the final receipt');
+if (finalState.receipt.verifiedActions !== 14 || finalState.receipt.blockedActions !== 0 || finalState.receipt.failedActions !== 0 || finalState.receipt.serviceGaps !== 0) {
+  throw new Error(`Unexpected final receipt: ${JSON.stringify(finalState.receipt)}`);
+}
+console.log('\n--- FINAL VERIFIED STATE ---\n');
 console.log(JSON.stringify({
-  discoveredServices: state.receipt.discoveredServices,
-  verifiedActions: state.receipt.verifiedActions,
-  blockedActions: state.receipt.blockedActions,
-  failedActions: state.receipt.failedActions,
-  serviceGaps: state.receipt.serviceGaps,
+  discoveredServices: finalState.receipt.discoveredServices,
+  verifiedActions: finalState.receipt.verifiedActions,
+  blockedActions: finalState.receipt.blockedActions,
+  failedActions: finalState.receipt.failedActions,
+  serviceGaps: finalState.receipt.serviceGaps,
 }, null, 2));

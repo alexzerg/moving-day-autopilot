@@ -46,6 +46,13 @@ export function createMovingTools(store: MoveStore) {
     callback: ({ approvalToken }) => JSON.stringify(store.executePlan(approvalToken)),
   });
 
+  const recordIdentityCompletion = tool({
+    name: 'record_identity_completion',
+    description: 'Record an identity-required task only after the human explicitly confirms completion and provides evidence. The agent may never invent this confirmation.',
+    inputSchema: z.object({ actionId: z.string(), evidence: z.string().min(8) }),
+    callback: ({ actionId, evidence }) => JSON.stringify(store.completeIdentityAction(actionId, evidence)),
+  });
+
   const verifyMoveCompletion = tool({
     name: 'verify_move_completion',
     description: 'Read provider state after execution, verify confirmations, count service gaps, and issue the move execution receipt.',
@@ -53,7 +60,7 @@ export function createMovingTools(store: MoveStore) {
     callback: () => JSON.stringify(store.verifyMove()),
   });
 
-  return [getJurisdictionPack, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, verifyMoveCompletion];
+  return [getJurisdictionPack, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, recordIdentityCompletion, verifyMoveCompletion];
 }
 
 export const movingTools = createMovingTools(moveStore);

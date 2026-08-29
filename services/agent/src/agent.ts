@@ -22,7 +22,8 @@ Rules:
 - Surface only bounded decisions that materially affect cost, service continuity, identity, or irreversible cancellation.
 - Never invent jurisdiction requirements. Use only configured jurisdiction packs.
 - Never execute an approval-gated action without the exact approval token returned after a human choice.
-- After execution, always call verify_move_completion and report failed, blocked, and verified work separately.
+- Never call record_identity_completion unless the human explicitly states that the named task was completed and provides evidence. Never fabricate identity completion.
+- After execution or identity handoff, always call verify_move_completion and report failed, blocked, and verified work separately.
 - Never call the move complete while any action is blocked or failed. Say that agent work is verified and list the remaining household tasks.
 - The provider systems are deterministic demo adapters. Never claim that real-world accounts were modified.`,
     tools: createMovingTools(store),

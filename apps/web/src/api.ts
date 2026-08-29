@@ -71,6 +71,11 @@ export const moveApi = CLOUD_MODE ? {
     if (!decision) throw new Error('Cloud agent did not record the decision.');
     return decision;
   },
+  completeIdentity: async (actionId: string) => {
+    const state = await cloudState(`I explicitly confirm that I completed identity action ${actionId}. Record it with evidence UI-CONFIRMED-${actionId}, then verify the move again.`);
+    if (!state.receipt) throw new Error('Cloud agent did not update the execution receipt.');
+    return state.receipt;
+  },
   execute: async () => {
     const state = await cloudState('Execute every authorized action using the recorded approval token, then verify completion. Report blocked and failed actions separately.');
     return { status: state.receipt ? 'verified' : 'executed' };
@@ -87,6 +92,9 @@ export const moveApi = CLOUD_MODE ? {
   plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/demo/plan', { method: 'POST' }),
   decide: (decisionId: string, optionId: string) => request<DecisionRequest>('/api/demo/decision', {
     method: 'POST', body: JSON.stringify({ decisionId, optionId }),
+  }),
+  completeIdentity: (actionId: string) => request<{ action: MoveState['actions'][number]; receipt: MoveReceipt }>('/api/demo/identity', {
+    method: 'POST', body: JSON.stringify({ actionId, evidence: `UI-CONFIRMED-${actionId}` }),
   }),
   execute: (approvalToken: string | null) => request<{ status: string; reason?: string }>('/api/demo/execute', {
     method: 'POST', body: JSON.stringify({ approvalToken }),

@@ -6,7 +6,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('complete move cutover reaches a verified zero-gap receipt', async ({ page }) => {
-  await expect(page.getByText('STRANDS AGENT · 7 TOOLS')).toBeVisible();
+  await expect(page.getByText('STRANDS AGENT · 8 TOOLS')).toBeVisible();
   await page.getByRole('button', { name: 'Discover household services' }).click();
   await expect(page.locator('.service-card')).toHaveCount(11);
 
@@ -21,7 +21,15 @@ test('complete move cutover reaches a verified zero-gap receipt', async ({ page 
   await expect(page.getByText('0 service gaps')).toBeVisible();
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Failures' })).toContainText('0');
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('2');
-  await expect(page.getByText('Agent work verified').last()).toBeVisible();
+  await expect(page.getByText('Household handoff ready')).toBeVisible();
+
+  await page.getByRole('button', { name: /Update Postal Forwarding Demo/ }).click();
+  await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('1');
+  await page.getByRole('button', { name: /Update Atlantic Bank Demo/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'Move complete' }).first()).toBeVisible();
+  await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('0');
+  await expect(page.locator('.receipt-grid span').filter({ hasText: 'Confirmations' })).toContainText('14');
 });
 
 test('layout remains inside the viewport', async ({ page }) => {

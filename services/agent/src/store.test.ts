@@ -24,6 +24,22 @@ describe('move lifecycle', () => {
     expect(receipt.failedActions).toBe(0);
     expect(receipt.serviceGaps).toBe(0);
     expect(receipt.blockedActions).toBe(2);
+
+    store.completeIdentityAction('update-postal', 'USPS-ID-VERIFIED');
+    expect(store.verifyMove().blockedActions).toBe(1);
+    store.completeIdentityAction('update-bank', 'BANK-ID-VERIFIED');
+    const finalReceipt = store.verifyMove();
+    expect(finalReceipt.verifiedActions).toBe(14);
+    expect(finalReceipt.blockedActions).toBe(0);
+    expect(finalReceipt.confirmations).toHaveLength(14);
+  });
+
+  it('rejects invented identity completion', () => {
+    store.discoverServices();
+    store.buildPlan();
+    const decision = store.approveDecision('internet-provider', 'cable-overlap');
+    store.executePlan(decision.approvalToken);
+    expect(() => store.completeIdentityAction('update-postal', 'short')).toThrow('Human completion evidence is required');
   });
 
   it('records the connectivity consequence of the cheaper provider', () => {

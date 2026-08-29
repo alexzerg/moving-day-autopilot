@@ -96,6 +96,22 @@ export class MoveStore {
     return clone(decision);
   }
 
+  completeIdentityAction(actionId: string, evidence: string) {
+    const action = this.state.actions.find((item) => item.id === actionId);
+    if (!action || action.risk !== 'identity') throw new Error('Unknown identity action');
+    if (action.status !== 'blocked') throw new Error('Identity action is not waiting for the household');
+    if (evidence.trim().length < 8) throw new Error('Human completion evidence is required');
+    action.status = 'executed';
+    action.confirmation = `HUMAN-${action.id.toUpperCase()}-${evidence.trim()}`;
+    const account = this.state.accounts.find((item) => item.id === action.accountId);
+    if (account) {
+      account.state = 'scheduled-new';
+      account.address = clone(this.state.moveCase.newAddress);
+    }
+    this.state.receipt = null;
+    return clone(action);
+  }
+
   executePlan(approvalToken: string | null) {
     if (this.state.actions.length === 0) throw new Error('Plan must be built before execution');
     const decision = this.state.decisions[0];
