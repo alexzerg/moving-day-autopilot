@@ -4,6 +4,11 @@ const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
 const SESSION_KEY = 'moving-day-agentcore-session';
 export const AGENT_RESPONSE_EVENT = 'moving-day-agent-response';
+let latestCloudState: MoveState | null = null;
+
+export function readLatestCloudState() {
+  return latestCloudState;
+}
 
 function createSessionId() {
   return `moving-day-web-${crypto.randomUUID().replaceAll('-', '')}`;

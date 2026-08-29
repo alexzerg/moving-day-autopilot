@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { floridaJurisdictionPack } from '@moving-day/contracts';
 import type { MoveAction, MoveState, ProviderAccount } from '@moving-day/contracts';
-import { AGENT_RESPONSE_EVENT, moveApi } from './api';
+import { AGENT_RESPONSE_EVENT, moveApi, readLatestCloudState } from './api';
 import './App.css';
 
 const kindIcon: Record<string, string> = {
@@ -64,7 +64,9 @@ export default function App() {
     setBusy(true); setError(null);
     try {
       await operation();
-      await refresh();
+      const cloudState = readLatestCloudState();
+      if (cloudMode && cloudState) setState(cloudState);
+      else await refresh();
       setActivity((items) => [label, ...items].slice(0, 6));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
