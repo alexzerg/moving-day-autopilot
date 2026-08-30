@@ -74,8 +74,15 @@ export class MoveStore {
       return serviceAddress.includes(normalizedOldStreet) && serviceAddress.includes(oldPostal);
     });
     if (matched.length === 0) throw new Error('No service accounts matched the configured old address');
+    const uniqueProviders = new Map<string, EvidenceAccount>();
+    for (const item of matched) {
+      const providerKey = item.provider.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const key = `${providerKey}:${item.kind}:${oldPostal}`;
+      if (!uniqueProviders.has(key)) uniqueProviders.set(key, item);
+    }
+    const deduplicated = [...uniqueProviders.values()];
     const used = new Set<string>();
-    this.state.accounts = matched.map((item, index) => {
+    this.state.accounts = deduplicated.map((item, index) => {
       const base = item.provider.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `service-${index + 1}`;
       let id = base;
       while (used.has(id)) id = `${base}-${index + 1}`;
@@ -94,7 +101,17 @@ export class MoveStore {
     this.state.actions = [];
     this.state.decisions = [];
     this.state.receipt = null;
-    return { discovered: this.state.accounts.length, rejectedAddressMismatches: evidence.length - matched.length, accounts: clone(this.state.accounts) };
+    return { discovered: this.state.accounts.length, rejectedAddressMismatches: evidence.length - matched.length, duplicateBillsCollapsed: matched.length - deduplicated.length, accounts: clone(this.state.accounts) };
+  }
+
+  confirmProviderAccounts(accountIds: string[]) {
+    const confirmed = new Set(accountIds);
+    this.state.accounts = this.state.accounts.filter((account) => confirmed.has(account.id));
+    if (this.state.accounts.length === 0) throw new Error('Confirm at least one provider account');
+    this.state.actions = [];
+    this.state.decisions = [];
+    this.state.receipt = null;
+    return { confirmed: this.state.accounts.length, accounts: clone(this.state.accounts) };
   }
 
   discoverServices() {

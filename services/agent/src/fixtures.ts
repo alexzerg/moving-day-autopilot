@@ -30,9 +30,9 @@ export const sandboxAccounts: ProviderAccount[] = [
   ['employer', 'Northstar Payroll', 'employer', 0],
   ['bank', 'Atlantic Bank', 'financial', 0],
   ['mobile', 'MobileOne', 'mobile', 95],
-  ['streaming', 'StreamBox', 'subscription', 18],
-  ['gym', 'FitHarbor', 'subscription', 42],
-  ['delivery', 'ParcelPass', 'delivery', 14],
+  ['health-insurance', 'Florida Blue', 'insurance', 420],
+  ['mortgage', 'Rocket Mortgage', 'financial', 1850],
+  ['toll-road', 'SunPass', 'delivery', 25],
 ].map(([id, provider, kind, monthlyCost]) => ({
   id: String(id),
   provider: String(provider),

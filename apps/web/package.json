@@ -1,7 +1,7 @@
 {
   "name": "@moving-day/web",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.17",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@moving-day/contracts": "^0.1.0",
+    "@react-pdf/renderer": "^4.9.0",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
-    "jszip": "^3.10.1",
+    "pdfjs-dist": "^5.4.149",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

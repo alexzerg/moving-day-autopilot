@@ -23,11 +23,13 @@ describe('move lifecycle', () => {
     expect(receipt.verifiedActions).toBeGreaterThan(10);
     expect(receipt.failedActions).toBe(0);
     expect(receipt.serviceGaps).toBe(0);
-    expect(receipt.blockedActions).toBe(2);
+    expect(receipt.blockedActions).toBe(3);
 
     store.completeIdentityAction('update-postal', 'USPS-ID-VERIFIED');
-    expect(store.verifyMove().blockedActions).toBe(1);
+    expect(store.verifyMove().blockedActions).toBe(2);
     store.completeIdentityAction('update-bank', 'BANK-ID-VERIFIED');
+    expect(store.verifyMove().blockedActions).toBe(1);
+    store.completeIdentityAction('update-mortgage', 'MORTGAGE-ID-VERIFIED');
     const finalReceipt = store.verifyMove();
     expect(finalReceipt.verifiedActions).toBe(14);
     expect(finalReceipt.blockedActions).toBe(0);
@@ -52,6 +54,26 @@ describe('move lifecycle', () => {
     expect(result.rejectedAddressMismatches).toBe(1);
     expect(result.accounts[0].accountReference).toBe('••••6789');
     expect(result.accounts[1].source).toContain('fiber.csv');
+  });
+
+  it('completes exactly one selected identity action', () => {
+    store.ingestServiceEvidence([
+      { provider: 'Bank of America', kind: 'financial', accountReference: '11112222', monthlyCost: 0, sourceName: 'boa-statement.eml', serviceAddress: '100 Harbor Lane, Hollywood, FL 33020' },
+      { provider: 'Chase', kind: 'financial', accountReference: '33334444', monthlyCost: 0, sourceName: 'chase-statement.eml', serviceAddress: '100 Harbor Lane, Hollywood, FL 33020' },
+    ]);
+    store.buildPlan();
+    const decision = store.approveDecision('internet-provider', 'cable-overlap');
+    store.executePlan(decision.approvalToken);
+    const identityActions = store.snapshot().actions.filter((action) => action.risk === 'identity');
+    expect(identityActions).toHaveLength(2);
+
+    store.completeIdentityAction(identityActions[0].id, 'UI-CONFIRMED-FIRST-BANK');
+    const receipt = store.verifyMove();
+    const state = store.snapshot();
+
+    expect(state.actions.find((action) => action.id === identityActions[0].id)?.status).toBe('verified');
+    expect(state.actions.find((action) => action.id === identityActions[1].id)?.status).toBe('blocked');
+    expect(receipt.blockedActions).toBe(1);
   });
 
   it('records the connectivity consequence of the cheaper provider', () => {

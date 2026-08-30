@@ -1,5 +1,6 @@
 import cors from '@fastify/cors';
-import type { Address, EvidenceAccount, EvidenceDocument, PhysicalMoveProfile, ServiceKind } from '@moving-day/contracts';
+import { calculateRoadRouteFromResolved, resolveUsAddress } from '@moving-day/contracts';
+import type { Address, EvidenceAccount, EvidenceDocument, PhysicalMoveProfile, ResolvedAddress, ServiceKind } from '@moving-day/contracts';
 import Fastify from 'fastify';
 import { createMovingAgent } from './agent.js';
 import { moveStore } from './store.js';
@@ -29,8 +30,11 @@ app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', t
 app.get('/api/sandbox/state', async () => moveStore.snapshot());
 app.post('/api/sandbox/reset', async () => moveStore.reset());
 app.post<{ Body: { moveDate: string; oldAddress: Address; newAddress: Address } }>('/api/sandbox/case', async (request) => moveStore.configureMoveCase(request.body));
+app.post<{ Body: { query: string } }>('/api/sandbox/address-resolve', async (request) => resolveUsAddress(request.body.query));
 app.post<{ Body: PhysicalMoveProfile }>('/api/sandbox/physical', async (request) => moveStore.configurePhysicalMove(request.body));
+app.post<{ Body: { origin: ResolvedAddress; destination: ResolvedAddress } }>('/api/sandbox/route', async (request) => calculateRoadRouteFromResolved(request.body.origin, request.body.destination, { googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY }));
 app.post<{ Body: { documents: EvidenceDocument[] } }>('/api/sandbox/evidence', async (request) => moveStore.ingestServiceEvidence(parseEvidenceDocuments(request.body.documents)));
+app.post<{ Body: { accountIds: string[] } }>('/api/sandbox/providers/confirm', async (request) => moveStore.confirmProviderAccounts(request.body.accountIds));
 app.post('/api/sandbox/discover', async () => moveStore.discoverServices());
 app.post('/api/sandbox/plan', async () => moveStore.buildPlan());
 app.post<{ Body: { decisionId: string; optionId: string } }>('/api/sandbox/decision', async (request) => moveStore.approveDecision(request.body.decisionId, request.body.optionId));

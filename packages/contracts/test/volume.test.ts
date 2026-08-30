@@ -23,4 +23,20 @@ describe('physical move estimator', () => {
     const stairs = calculateMoveEstimate({ ...base, originAccess: 'stairs', destinationAccess: 'stairs' });
     expect(stairs.laborHours.total).toBeGreaterThan(ground.laborHours.total);
   });
+
+  it('changes the recommended truck when inventory volume grows', () => {
+    const small = calculateMoveEstimate({
+      household: 'one-adult', bedrooms: 0, crewSize: 2, originAccess: 'ground', destinationAccess: 'ground',
+      inventory: { sofas: 0, beds: 0, dressers: 0, tables: 0, desks: 0, appliances: 0, boxes: 0 },
+    });
+    const large = calculateMoveEstimate({
+      household: 'two-adults-three-children', bedrooms: 6, crewSize: 4, originAccess: 'stairs', destinationAccess: 'stairs',
+      inventory: { sofas: 6, beds: 8, dressers: 10, tables: 8, desks: 8, appliances: 10, boxes: 120 },
+    });
+
+    expect(small.trucks.map((truck) => truck.vehicle)).toEqual(['Cargo Van', 'Cargo Van']);
+    expect(large.trucks.map((truck) => truck.vehicle)).toEqual(['29′ Truck', '26′ Truck']);
+    expect(large.recommendedCapacityCuFt).toBeGreaterThan(small.recommendedCapacityCuFt);
+    expect(large.trucks.every((truck) => truck.capacityRisk)).toBe(true);
+  });
 });

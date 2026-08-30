@@ -1,4 +1,4 @@
-import type { Address, DecisionRequest, EvidenceDocument, MoveCase, MoveReceipt, MoveState, PhysicalMoveProfile } from '@moving-day/contracts';
+import type { Address, DecisionRequest, EvidenceDocument, MoveCase, MoveReceipt, MoveState, PhysicalMoveProfile, ProviderAccount, ResolvedAddress, RouteDistance } from '@moving-day/contracts';
 
 const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
@@ -57,11 +57,11 @@ async function cloudState(prompt: string, publishResponse = true) {
   return (await invokeCloud(prompt, publishResponse)).state;
 }
 
-async function gmailRequest<T>(path: string, init?: RequestInit) {
+async function bridgeRequest<T>(path: string, init?: RequestInit) {
   const response = await fetch(path, init);
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(body.error ?? `Gmail request failed: ${response.status}`);
+    throw new Error(body.error ?? `Bridge request failed: ${response.status}`);
   }
   return response.json() as Promise<T>;
 }
@@ -72,6 +72,12 @@ export const moveApi = CLOUD_MODE ? {
     const state = await cloudState(`Configure the move case with this exact JSON, then return the untouched configured state: ${JSON.stringify(input)}`);
     return state.moveCase;
   },
+  resolveAddress: (query: string) => bridgeRequest<ResolvedAddress>('/api/address-resolve', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query }),
+  }),
+  routeDistance: (input: { origin: ResolvedAddress; destination: ResolvedAddress }) => bridgeRequest<RouteDistance>('/api/route-distance', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input),
+  }),
   estimatePhysical: async (input: PhysicalMoveProfile) => {
     const state = await cloudState(`Call estimate_move_requirements with this exact household and inventory profile, then summarize volume, weight, truck and labor: ${JSON.stringify(input)}`);
     return state.moveEstimate;
@@ -80,10 +86,10 @@ export const moveApi = CLOUD_MODE ? {
     localStorage.setItem(SESSION_KEY, createSessionId());
     return cloudState('Call get_move_state and return the new untouched move case without changing anything.');
   },
-  gmailStatus: () => gmailRequest<{ configured: boolean; connected: boolean; email: string | null }>('/api/gmail/status'),
-  gmailDisconnect: () => gmailRequest<{ connected: boolean }>('/api/gmail/disconnect', { method: 'POST' }),
+  gmailStatus: () => bridgeRequest<{ configured: boolean; connected: boolean; email: string | null }>('/api/gmail/status'),
+  gmailDisconnect: () => bridgeRequest<{ connected: boolean }>('/api/gmail/disconnect', { method: 'POST' }),
   gmailScan: async () => {
-    const result = await gmailRequest<{ text: string; state: MoveState; sessionId: string }>('/api/gmail/scan', {
+    const result = await bridgeRequest<{ text: string; state: MoveState; sessionId: string }>('/api/gmail/scan', {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: sessionId() }),
     });
     latestCloudState = result.state;
@@ -94,6 +100,11 @@ export const moveApi = CLOUD_MODE ? {
     const state = await cloudState(`Call get_move_state first. Extract only explicit service-account facts whose service address matches the configured old address, then call ingest_service_evidence. Ignore other addresses and do not invent missing values. Evidence: ${JSON.stringify(documents)}`);
     return { discovered: state.accounts.length };
   },
+  confirmProviders: async (accounts: ProviderAccount[]) => {
+    const confirmedEvidence = accounts.map((account) => ({ provider: account.provider, kind: account.kind, accountReference: account.accountReference, serviceAddress: `${account.address.line1}, ${account.address.city}, ${account.address.region} ${account.address.postalCode}`, monthlyCost: account.monthlyCost, sourceName: 'human-provider-review' }));
+    const state = await cloudState(`The human explicitly confirmed exactly these provider accounts: ${JSON.stringify(confirmedEvidence)}. Call ingest_service_evidence once with sourceName human-provider-review, sourceType document and exactly this accounts array. This replaces unconfirmed candidates. Do not discover, plan or execute anything yet.`);
+    return { confirmed: state.accounts.length };
+  },
   discover: async () => {
     const state = await cloudState('Discover all address-linked household services. Do not build the plan yet.');
     return { discovered: state.accounts.length };
@@ -102,16 +113,35 @@ export const moveApi = CLOUD_MODE ? {
     const state = await cloudState('Build the dependency-safe Florida move plan. Do not choose the internet trade-off and do not execute anything.');
     return { actions: state.actions, decisions: state.decisions };
   },
+  autopilot: async () => {
+    const state = await cloudState('Advance this move autonomously as far as safely possible. Inspect the current state and jurisdiction, choose and call the necessary Strands tools yourself, build the dependency-safe plan if missing, execute reversible authorized work when permitted, and verify provider state. Do not discover sandbox accounts when no evidence exists. Stop only for an unresolved bounded human decision or identity-only task. Explain the tools you selected and why. Return the full authoritative state.');
+    return { actions: state.actions, decisions: state.decisions, receipt: state.receipt };
+  },
   decide: async (decisionId: string, optionId: string) => {
     const state = await cloudState(`Record my exact decision: decisionId=${decisionId}, optionId=${optionId}. Do not execute the plan yet.`);
     const decision = state.decisions.find((item) => item.id === decisionId);
     if (!decision) throw new Error('Cloud agent did not record the decision.');
     return decision;
   },
+  continueAutopilot: async (decisionId: string, optionId: string) => {
+    const state = await cloudState(`The human selected this exact bounded decision: decisionId=${decisionId}, optionId=${optionId}. Record it, then autonomously choose and call every Strands tool needed to advance all safely authorized branches, verify provider state, and stop at identity-only work. Explain the tools you selected and why. Never fabricate identity completion. Return the full authoritative state.`);
+    return { actions: state.actions, decisions: state.decisions, receipt: state.receipt };
+  },
   completeIdentity: async (actionId: string) => {
-    const state = await cloudState(`I explicitly confirm that I completed identity action ${actionId}. Record it with evidence UI-CONFIRMED-${actionId}, then verify the move again.`);
-    if (!state.receipt) throw new Error('Cloud agent did not update the execution receipt.');
-    return state.receipt;
+    const before = await cloudState('Call get_move_state only. Do not mutate any action.');
+    const target = before.actions.find((action) => action.id === actionId && action.risk === 'identity');
+    if (!target) throw new Error(`Identity action ${actionId} is not available.`);
+    const otherIdentityStatuses = new Map(before.actions.filter((action) => action.risk === 'identity' && action.id !== actionId).map((action) => [action.id, action.status]));
+    const recorded = await cloudState(`The human explicitly completed only identity actionId=${actionId}. Call record_identity_completion exactly once with actionId=${actionId} and evidence=UI-CONFIRMED-${actionId}. Do not call record_identity_completion for any other action. Do not call verify_move_completion in this turn. Return the state.`);
+    const updatedTarget = recorded.actions.find((action) => action.id === actionId);
+    if (!updatedTarget || !['executed', 'verified'].includes(updatedTarget.status)) throw new Error(`Identity action ${actionId} was not recorded.`);
+    for (const [otherId, previousStatus] of otherIdentityStatuses) {
+      const currentStatus = recorded.actions.find((action) => action.id === otherId)?.status;
+      if (currentStatus !== previousStatus) throw new Error(`Identity boundary violation: ${otherId} changed while completing ${actionId}.`);
+    }
+    const verified = await cloudState('Call verify_move_completion exactly once. Do not call record_identity_completion for any action. Return the state and receipt.');
+    if (!verified.receipt) throw new Error('Cloud agent did not update the execution receipt.');
+    return verified.receipt;
   },
   execute: async () => {
     const state = await cloudState('Execute every authorized action using the recorded approval token, then verify completion. Report blocked and failed actions separately.');
@@ -127,6 +157,12 @@ export const moveApi = CLOUD_MODE ? {
   configure: (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => request<MoveCase>('/api/sandbox/case', {
     method: 'POST', body: JSON.stringify(input),
   }),
+  resolveAddress: (query: string) => request<ResolvedAddress>('/api/sandbox/address-resolve', {
+    method: 'POST', body: JSON.stringify({ query }),
+  }),
+  routeDistance: (input: { origin: ResolvedAddress; destination: ResolvedAddress }) => request<RouteDistance>('/api/sandbox/route', {
+    method: 'POST', body: JSON.stringify(input),
+  }),
   estimatePhysical: (input: PhysicalMoveProfile) => request<{ estimate: MoveState['moveEstimate'] }>('/api/sandbox/physical', {
     method: 'POST', body: JSON.stringify(input),
   }).then((result) => result.estimate),
@@ -137,11 +173,20 @@ export const moveApi = CLOUD_MODE ? {
   ingestEvidence: (documents: EvidenceDocument[]) => request<{ discovered: number }>('/api/sandbox/evidence', {
     method: 'POST', body: JSON.stringify({ documents }),
   }),
+  confirmProviders: (accounts: ProviderAccount[]) => request<{ confirmed: number }>('/api/sandbox/providers/confirm', {
+    method: 'POST', body: JSON.stringify({ accountIds: accounts.map((account) => account.id) }),
+  }),
   discover: () => request<{ discovered: number }>('/api/sandbox/discover', { method: 'POST' }),
   plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/sandbox/plan', { method: 'POST' }),
+  autopilot: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/sandbox/plan', { method: 'POST' }),
   decide: (decisionId: string, optionId: string) => request<DecisionRequest>('/api/sandbox/decision', {
     method: 'POST', body: JSON.stringify({ decisionId, optionId }),
   }),
+  continueAutopilot: async (decisionId: string, optionId: string) => {
+    const decision = await request<DecisionRequest>('/api/sandbox/decision', { method: 'POST', body: JSON.stringify({ decisionId, optionId }) });
+    await request<{ status: string; reason?: string }>('/api/sandbox/execute', { method: 'POST', body: JSON.stringify({ approvalToken: decision.approvalToken }) });
+    return request<MoveReceipt>('/api/sandbox/verify', { method: 'POST' });
+  },
   completeIdentity: (actionId: string) => request<{ action: MoveState['actions'][number]; receipt: MoveReceipt }>('/api/sandbox/identity', {
     method: 'POST', body: JSON.stringify({ actionId, evidence: `UI-CONFIRMED-${actionId}` }),
   }),

@@ -54,7 +54,7 @@ export const householdBoxBaseline: Record<HouseholdProfile, number> = {
 
 const itemVolume = { sofas: 65, beds: 70, dressers: 35, tables: 35, desks: 25, appliances: 45 } as const;
 const uhaul = [
-  ['Cargo Van', 245], ['10′ Truck', 402], ['15′ Truck', 764], ['20′ Truck', 1016], ['26′ Truck', 1682],
+  ['Cargo Van', 246], ['10′ Truck', 402], ['15′ Truck', 764], ['20′ Truck', 1016], ['26′ Truck', 1682], ['29′ Truck', 2057],
 ] as const;
 const penske = [
   ['Cargo Van', 404], ['12′ Truck', 450], ['16′ Truck', 800], ['22′ Truck', 1200], ['26′ Truck', 1700],

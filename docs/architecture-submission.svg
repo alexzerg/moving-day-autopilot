@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f4ed"/><stop offset="1" stop-color="#eaf5f1"/></linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#123c43"/><stop offset="1" stop-color="#1b5b61"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#123c43" flood-opacity="0.12"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#159a7d"/></marker>
+    <style>
+      .title{font:700 38px Arial;fill:#123c43}.subtitle{font:18px Arial;fill:#667c80}.label{font:700 13px Arial;letter-spacing:1.5px;fill:#159a7d}.boxTitle{font:700 21px Arial;fill:#17353c}.boxText{font:15px Arial;fill:#5d7074}.whiteTitle{font:700 22px Arial;fill:white}.whiteText{font:15px Arial;fill:#d3e7e2}.pill{font:700 12px Arial;fill:#117a64}.small{font:13px Arial;fill:#667c80}.flow{stroke:#159a7d;stroke-width:4;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text x="70" y="66" class="label">AGENTS FOR HUMANS HACKATHON</text>
+  <text x="70" y="112" class="title">Moving-Day Autopilot — Production Architecture</text>
+  <text x="70" y="145" class="subtitle">Evidence-first account discovery, bounded AI orchestration, deterministic planning, and human-controlled provider actions</text>
+
+  <g filter="url(#shadow)">
+    <rect x="65" y="210" width="300" height="230" rx="24" fill="#fff" stroke="#d5e2de" stroke-width="2"/>
+    <text x="95" y="250" class="label">USER EXPERIENCE</text>
+    <text x="95" y="287" class="boxTitle">React + Vite Web App</text>
+    <text x="95" y="320" class="boxText">• Real route and inventory</text>
+    <text x="95" y="348" class="boxText">• Provider confirmation</text>
+    <text x="95" y="376" class="boxText">• Official action links</text>
+    <text x="95" y="404" class="boxText">• Progress + vector PDF</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="435" y="190" width="350" height="270" rx="24" fill="#fff" stroke="#d5e2de" stroke-width="2"/>
+    <text x="465" y="232" class="label">VERCEL APPLICATION LAYER</text>
+    <text x="465" y="270" class="boxTitle">Web + Secure Bridge</text>
+    <text x="465" y="305" class="boxText">• Gmail OAuth 2.0 + PKCE popup</text>
+    <text x="465" y="334" class="boxText">• AES-GCM HttpOnly token cookie</text>
+    <text x="465" y="363" class="boxText">• Provider catalog + filtering</text>
+    <text x="465" y="392" class="boxText">• AWS OIDC — no static AWS keys</text>
+    <rect x="465" y="414" width="218" height="28" rx="14" fill="#e5f7f0"/>
+    <text x="480" y="433" class="pill">GMAIL SCOPE: READ ONLY</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="855" y="170" width="680" height="320" rx="26" fill="url(#hero)"/>
+    <text x="890" y="216" class="label" fill="#8ed9c8">AWS AGENT RUNTIME</text>
+    <text x="890" y="258" class="whiteTitle">Amazon Bedrock AgentCore Runtime</text>
+    <rect x="890" y="287" width="285" height="150" rx="18" fill="#204f56" stroke="#4a7478"/>
+    <text x="915" y="322" class="whiteTitle">Strands Agent</text>
+    <text x="915" y="353" class="whiteText">Goal → reason → choose tool</text>
+    <text x="915" y="381" class="whiteText">Human decision boundaries</text>
+    <text x="915" y="409" class="whiteText">Authoritative MoveState</text>
+    <rect x="1205" y="287" width="295" height="150" rx="18" fill="#204f56" stroke="#4a7478"/>
+    <text x="1230" y="322" class="whiteTitle">Amazon Nova 2 Lite</text>
+    <text x="1230" y="353" class="whiteText">Unstructured evidence</text>
+    <text x="1230" y="381" class="whiteText">Provider classification</text>
+    <text x="1230" y="409" class="whiteText">Personalized planning</text>
+    <text x="890" y="469" class="whiteText">11 typed tools: evidence • planning • decisions • execution • identity handoff • verification</text>
+  </g>
+
+  <path d="M365 325 C395 325 405 325 435 325" class="flow"/>
+  <path d="M785 325 C815 325 825 325 855 325" class="flow"/>
+
+  <g filter="url(#shadow)">
+    <rect x="65" y="535" width="345" height="215" rx="22" fill="#fff" stroke="#d5e2de" stroke-width="2"/>
+    <text x="95" y="575" class="label">REAL DATA SOURCES</text>
+    <text x="95" y="612" class="boxTitle">Evidence + Routing</text>
+    <text x="95" y="647" class="boxText">Gmail API — messages only</text>
+    <text x="95" y="676" class="boxText">PDF.js — local bill parsing</text>
+    <text x="95" y="705" class="boxText">Census + OpenStreetMap + OSRM</text>
+    <text x="95" y="734" class="small">No email send / modify / delete capability</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="470" y="535" width="370" height="215" rx="22" fill="#fff" stroke="#d5e2de" stroke-width="2"/>
+    <text x="500" y="575" class="label">DETERMINISTIC SERVICES</text>
+    <text x="500" y="612" class="boxTitle">Source of Truth</text>
+    <text x="500" y="647" class="boxText">Inventory → volume → truck</text>
+    <text x="500" y="676" class="boxText">Route → mileage → fuel → cost</text>
+    <text x="500" y="705" class="boxText">Address validation + account masking</text>
+    <text x="500" y="734" class="small">Nova never invents calculations or provider state</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="900" y="535" width="635" height="215" rx="22" fill="#fff" stroke="#d5e2de" stroke-width="2"/>
+    <text x="930" y="575" class="label">TWO HONEST EXECUTION MODES</text>
+    <rect x="930" y="604" width="270" height="116" rx="16" fill="#eaf3f8"/>
+    <text x="950" y="636" class="boxTitle">Judge Sandbox</text>
+    <text x="950" y="665" class="boxText">Agent executes adapters</text>
+    <text x="950" y="693" class="boxText">Verification + receipt</text>
+    <rect x="1230" y="604" width="275" height="116" rx="16" fill="#fff3de"/>
+    <text x="1250" y="636" class="boxTitle">Real Account Mode</text>
+    <text x="1250" y="665" class="boxText">Official guided handoffs</text>
+    <text x="1250" y="693" class="boxText">User-controlled completion</text>
+  </g>
+
+  <path d="M610 460 C610 500 420 500 300 535" class="flow"/>
+  <path d="M1050 490 C1050 515 1030 520 1030 535" class="flow"/>
+  <path d="M1190 490 C1190 515 1190 520 1190 535" class="flow"/>
+
+  <text x="70" y="820" class="label">TRUST BOUNDARY</text>
+  <text x="70" y="853" class="subtitle">AI discovers and orchestrates. Deterministic code calculates and validates. Humans control login, MFA, CAPTCHA, identity, and final provider submission.</text>
+</svg>

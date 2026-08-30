@@ -1,6 +1,6 @@
 {
   "name": "@moving-day/bridge",
-  "version": "0.1.0",
+  "version": "0.1.10",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-agentcore": "3.1121.0",
+    "@moving-day/contracts": "*",
     "@vercel/oidc-aws-credentials-provider": "^3.3.5",
     "express": "5.1.0"
   },

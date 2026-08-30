@@ -46,20 +46,20 @@ Account: 44008762
 Service Address: 100 Harbor Lane, Hollywood, FL 33020
 Monthly Cost: $95.00
 ---
-Provider: StreamBox
-Service: subscription
+Provider: Florida Blue
+Service: insurance
 Account: 99001420
 Service Address: 100 Harbor Lane, Hollywood, FL 33020
-Monthly Cost: $18.00
+Monthly Cost: $420.00
 ---
-Provider: FitHarbor
-Service: subscription
+Provider: Rocket Mortgage
+Service: financial
 Account: 66421800
 Service Address: 100 Harbor Lane, Hollywood, FL 33020
-Monthly Cost: $42.00
+Monthly Cost: $1850.00
 ---
-Provider: ParcelPass
+Provider: SunPass
 Service: delivery
 Account: 33130009
 Service Address: 100 Harbor Lane, Hollywood, FL 33020
-Monthly Cost: $14.00
+Monthly Cost: $25.00
