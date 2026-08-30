@@ -56,6 +56,8 @@ export default function App() {
   const [moveDraft, setMoveDraft] = useState({
     moveDate: '', oldLine1: '', oldCity: '', oldPostal: '', newLine1: '', newCity: '', newPostal: '',
   });
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [evidenceText, setEvidenceText] = useState('');
 
   const refresh = useCallback(async () => setState(await moveApi.state()), []);
   useEffect(() => { refresh().catch((reason: Error) => setError(reason.message)); }, [refresh]);
@@ -97,6 +99,22 @@ export default function App() {
     newAddress: { line1: moveDraft.newLine1, city: moveDraft.newCity, region: 'FL', postalCode: moveDraft.newPostal, country: 'US' },
   }));
 
+  const importEvidence = async () => {
+    const documents = await Promise.all(evidenceFiles.map(async (file) => ({ name: file.name, text: (await file.text()).slice(0, 9000) })));
+    if (evidenceText.trim()) documents.push({ name: 'pasted-move-inbox.txt', text: evidenceText.trim().slice(0, 9000) });
+    if (documents.length === 0) {
+      setError('Upload at least one text/email file or paste service evidence.');
+      return;
+    }
+    await run(`Agent extracted services from ${documents.length} evidence source${documents.length === 1 ? '' : 's'}.`, () => moveApi.ingestEvidence(documents));
+  };
+
+  const loadSampleEvidence = async () => {
+    const response = await fetch('/sample-move-inbox.txt');
+    setEvidenceText(await response.text());
+    setActivity((items) => ['Sample move inbox loaded. Review it, then ask the agent to analyze evidence.', ...items].slice(0, 6));
+  };
+
   const exportPacket = async () => {
     if (!state?.receipt) return;
     setBusy(true); setError(null);
@@ -130,7 +148,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="mark">↗</div><div><strong>Moving-Day Autopilot</strong><span>Jurisdiction-aware household cutover</span></div></div>
-        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 9 TOOLS' : 'LOCAL STRANDS AGENT · 9 TOOLS'}</div>
+        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 10 TOOLS' : 'LOCAL STRANDS AGENT · 10 TOOLS'}</div>
       </header>
 
       <section className="hero">
@@ -156,6 +174,11 @@ export default function App() {
           <label>New ZIP<input value={moveDraft.newPostal} onChange={(event) => setMoveDraft({ ...moveDraft, newPostal: event.target.value })} /></label>
           <button disabled={busy || !moveDraft.moveDate || !moveDraft.oldLine1 || !moveDraft.newLine1} onClick={configureMove}>Apply move details</button>
         </div>
+      </section>}
+
+      {state.accounts.length === 0 && <section className="evidence-import">
+        <div><span className="eyebrow">BRING YOUR OWN MOVE INBOX</span><h2>Let the agent discover your providers</h2><p>Upload text-based bills or emails. Account references are masked before they enter move state.</p><button className="sample-button" onClick={loadSampleEvidence}>Load sample inbox</button></div>
+        <div className="evidence-inputs"><label>Files<input type="file" multiple accept=".txt,.eml,.csv,.json,text/plain,message/rfc822,text/csv,application/json" onChange={(event) => setEvidenceFiles(Array.from(event.target.files ?? []))} /></label><label>Or paste bill/email text<textarea rows={5} value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} placeholder="Provider: ...\nService: electricity\nAccount: ...\nMonthly Cost: ..." /></label><button disabled={busy || (evidenceFiles.length === 0 && !evidenceText.trim())} onClick={importEvidence}>Analyze bills and emails</button></div>
       </section>}
 
       <section className="stages">

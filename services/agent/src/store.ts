@@ -1,5 +1,5 @@
 import { floridaJurisdictionPack, MoveCaseSchema } from '@moving-day/contracts';
-import type { Address, DecisionRequest, MoveAction, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
+import type { Address, DecisionRequest, EvidenceAccount, MoveAction, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
 import { demoAccounts, demoCase } from './fixtures.js';
 
 function offsetDate(date: string, days: number) {
@@ -50,8 +50,35 @@ export class MoveStore {
     return clone(configured);
   }
 
+  ingestServiceEvidence(evidence: EvidenceAccount[]) {
+    if (evidence.length === 0) throw new Error('No service accounts were extracted from the supplied evidence');
+    const used = new Set<string>();
+    this.state.accounts = evidence.map((item, index) => {
+      const base = item.provider.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `service-${index + 1}`;
+      let id = base;
+      while (used.has(id)) id = `${base}-${index + 1}`;
+      used.add(id);
+      return {
+        id,
+        provider: item.provider,
+        kind: item.kind,
+        accountReference: `••••${item.accountReference.replace(/\D/g, '').slice(-4) || item.accountReference.slice(-4)}`,
+        address: clone(this.state.moveCase.oldAddress),
+        monthlyCost: item.monthlyCost,
+        state: 'active-old' as const,
+        source: `https://evidence.invalid/${encodeURIComponent(item.sourceName)}`,
+      };
+    });
+    this.state.actions = [];
+    this.state.decisions = [];
+    this.state.receipt = null;
+    return { discovered: this.state.accounts.length, accounts: clone(this.state.accounts) };
+  }
+
   discoverServices() {
-    this.state.accounts = clone(demoAccounts).map((account) => ({ ...account, address: clone(this.state.moveCase.oldAddress) }));
+    if (this.state.accounts.length === 0) {
+      this.state.accounts = clone(demoAccounts).map((account) => ({ ...account, address: clone(this.state.moveCase.oldAddress) }));
+    }
     return { discovered: this.state.accounts.length, accounts: this.snapshot().accounts };
   }
 

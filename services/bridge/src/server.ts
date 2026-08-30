@@ -3,7 +3,7 @@ import { awsCredentialsProvider } from '@vercel/oidc-aws-credentials-provider';
 import express from 'express';
 
 const app = express();
-app.use(express.json({ limit: '16kb' }));
+app.use(express.json({ limit: '128kb' }));
 
 const sessionPattern = /^[A-Za-z0-9-]{33,100}$/;
 const limits = new Map<string, { count: number; resetAt: number }>();
@@ -48,7 +48,7 @@ app.post('/api/agent', async (request, response) => {
 
   const prompt = typeof request.body?.prompt === 'string' ? request.body.prompt.trim() : '';
   const sessionId = typeof request.body?.sessionId === 'string' ? request.body.sessionId : '';
-  if (!prompt || prompt.length > 2400) return response.status(400).json({ error: 'Prompt must contain 1–2400 characters.' });
+  if (!prompt || prompt.length > 12_000) return response.status(400).json({ error: 'Prompt must contain 1–12000 characters.' });
   if (!sessionPattern.test(sessionId)) return response.status(400).json({ error: 'Invalid session ID.' });
 
   const runtimeArn = process.env.AGENTCORE_RUNTIME_ARN;

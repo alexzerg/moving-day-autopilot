@@ -42,6 +42,16 @@ describe('move lifecycle', () => {
     expect(() => store.completeIdentityAction('update-postal', 'short')).toThrow('Human completion evidence is required');
   });
 
+  it('ingests real service evidence and masks account references', () => {
+    const result = store.ingestServiceEvidence([
+      { provider: 'Example Electric', kind: 'electricity', accountReference: '123456789', monthlyCost: 121.5, sourceName: 'electric-bill.eml' },
+      { provider: 'Example Fiber', kind: 'internet', accountReference: 'ABC-9988', monthlyCost: 65, sourceName: 'fiber.csv' },
+    ]);
+    expect(result.discovered).toBe(2);
+    expect(result.accounts[0].accountReference).toBe('••••6789');
+    expect(result.accounts[1].source).toContain('fiber.csv');
+  });
+
   it('records the connectivity consequence of the cheaper provider', () => {
     store.discoverServices();
     store.buildPlan();

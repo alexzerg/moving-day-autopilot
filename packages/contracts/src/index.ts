@@ -44,6 +44,21 @@ export const MoveCaseSchema = z.object({
 });
 export type MoveCase = z.infer<typeof MoveCaseSchema>;
 
+export const EvidenceDocumentSchema = z.object({
+  name: z.string().min(1),
+  text: z.string().min(1).max(12000),
+});
+export type EvidenceDocument = z.infer<typeof EvidenceDocumentSchema>;
+
+export const EvidenceAccountSchema = z.object({
+  provider: z.string().min(1),
+  kind: ServiceKindSchema,
+  accountReference: z.string().min(1),
+  monthlyCost: z.number().nonnegative(),
+  sourceName: z.string().min(1),
+});
+export type EvidenceAccount = z.infer<typeof EvidenceAccountSchema>;
+
 export const ProviderAccountSchema = z.object({
   id: z.string().min(1),
   provider: z.string().min(1),

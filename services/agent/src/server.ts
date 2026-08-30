@@ -1,5 +1,5 @@
 import cors from '@fastify/cors';
-import type { Address } from '@moving-day/contracts';
+import type { Address, EvidenceAccount, EvidenceDocument, ServiceKind } from '@moving-day/contracts';
 import Fastify from 'fastify';
 import { createMovingAgent } from './agent.js';
 import { moveStore } from './store.js';
@@ -7,10 +7,28 @@ import { moveStore } from './store.js';
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
 
-app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 9 }));
+const serviceKinds = new Set<ServiceKind>([
+  'electricity', 'water', 'internet', 'insurance', 'postal',
+  'employer', 'financial', 'mobile', 'subscription', 'delivery',
+]);
+
+function parseEvidenceDocuments(documents: EvidenceDocument[]): EvidenceAccount[] {
+  return documents.flatMap((document) => document.text.split(/\n\s*---+\s*\n/).flatMap((block) => {
+    const field = (name: string) => block.match(new RegExp(`^${name}\\s*:\\s*(.+)$`, 'im'))?.[1]?.trim();
+    const provider = field('Provider');
+    const kind = field('Service') as ServiceKind | undefined;
+    const accountReference = field('Account');
+    const monthlyCost = Number(field('Monthly Cost')?.replace(/[^0-9.]/g, ''));
+    if (!provider || !kind || !serviceKinds.has(kind) || !accountReference || !Number.isFinite(monthlyCost)) return [];
+    return [{ provider, kind, accountReference, monthlyCost, sourceName: document.name }];
+  }));
+}
+
+app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 10 }));
 app.get('/api/demo/state', async () => moveStore.snapshot());
 app.post('/api/demo/reset', async () => moveStore.reset());
 app.post<{ Body: { moveDate: string; oldAddress: Address; newAddress: Address } }>('/api/demo/case', async (request) => moveStore.configureMoveCase(request.body));
+app.post<{ Body: { documents: EvidenceDocument[] } }>('/api/demo/evidence', async (request) => moveStore.ingestServiceEvidence(parseEvidenceDocuments(request.body.documents)));
 app.post('/api/demo/discover', async () => moveStore.discoverServices());
 app.post('/api/demo/plan', async () => moveStore.buildPlan());
 app.post<{ Body: { decisionId: string; optionId: string } }>('/api/demo/decision', async (request) => moveStore.approveDecision(request.body.decisionId, request.body.optionId));

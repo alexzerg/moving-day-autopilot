@@ -6,7 +6,7 @@
 
 Moving-Day Autopilot is a jurisdiction-aware Strands agent that completes the administrative cutover of a household move across utilities, internet, insurance, address records, appointments, deposits, and final bills.
 
-The agent runs the repetitive work in the background and interrupts the household only when a decision materially affects cost, service continuity, identity, or an irreversible cancellation. It never marks blocked work as complete.
+The agent runs the repetitive work in the background and interrupts the household only when a decision materially affects cost, service continuity, identity, or an irreversible cancellation. Users can upload text-based bills or service emails; Nova extracts only explicit provider facts and account references are masked before entering move state. The agent never marks blocked work as complete.
 
 ## Reference outcome
 
@@ -65,7 +65,8 @@ After verification, the browser generates a ZIP archive containing:
 |---|---|
 | `get_jurisdiction_pack` | Read versioned rules, sources, supported services, and identity boundaries |
 | `configure_move_case` | Set the household's move date and Florida addresses |
-| `discover_move_services` | Discover the household's address-linked services |
+| `ingest_service_evidence` | Store providers extracted from user-supplied bills and emails |
+| `discover_move_services` | Discover the deterministic demo services when no evidence is supplied |
 | `build_move_plan` | Build the dependency-safe administrative cutover |
 | `get_move_state` | Read the authoritative session state |
 | `record_move_decision` | Record the exact human provider choice and issue an approval token |
@@ -134,7 +135,7 @@ The test suite covers contracts, jurisdiction-pack validation, approval gating, 
 
 ## Demo boundaries
 
-All addresses, accounts, provider portals, confirmation codes, and move events are deterministic synthetic data. The agent modifies real state inside the demo provider adapters and verifies it, but it does not contact real utilities or government systems.
+The public demo accepts real text-based bills or emails for provider discovery, but provider execution remains a deterministic synthetic adapter layer. Account references are masked. The agent modifies real state inside the demo adapters and verifies it, but it does not contact real utilities, banks, or government systems.
 
 ## License
 

@@ -8,7 +8,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('complete move cutover reaches a verified zero-gap receipt', async ({ page }) => {
-  await expect(page.getByText('STRANDS AGENT · 9 TOOLS')).toBeVisible();
+  await expect(page.getByText('STRANDS AGENT · 10 TOOLS')).toBeVisible();
   await page.getByLabel('New street').fill('900 Demo Way');
   await page.getByLabel('Move date').fill('2026-09-20');
   await page.getByRole('button', { name: 'Apply move details' }).click();
@@ -52,6 +52,15 @@ test('complete move cutover reaches a verified zero-gap receipt', async ({ page 
   expect(files).toContain('provider-email-drafts/electric.txt');
   const calendar = await zip.file('appointments.ics')!.async('text');
   expect(calendar.match(/BEGIN:VEVENT/g)).toHaveLength(14);
+});
+
+test('sample move inbox is converted into discovered services', async ({ page }) => {
+  await page.getByRole('button', { name: 'Load sample inbox' }).click();
+  await expect(page.getByLabel('Or paste bill/email text')).toHaveValue(/Florida Power & Light/);
+  await page.getByRole('button', { name: 'Analyze bills and emails' }).click();
+  await expect(page.locator('.service-card')).toHaveCount(11);
+  await expect(page.getByText('Florida Power & Light')).toBeVisible();
+  await expect(page.getByText('Atlantic Bank')).toBeVisible();
 });
 
 test('layout remains inside the viewport', async ({ page }) => {

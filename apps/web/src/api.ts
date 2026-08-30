@@ -1,4 +1,4 @@
-import type { Address, DecisionRequest, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
+import type { Address, DecisionRequest, EvidenceDocument, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
 
 const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
@@ -66,6 +66,10 @@ export const moveApi = CLOUD_MODE ? {
     localStorage.setItem(SESSION_KEY, createSessionId());
     return cloudState('Call get_move_state and return the new untouched demo case without changing anything.');
   },
+  ingestEvidence: async (documents: EvidenceDocument[]) => {
+    const state = await cloudState(`Extract only explicit service-account facts from these documents and call ingest_service_evidence. Do not invent missing values. Evidence: ${JSON.stringify(documents)}`);
+    return { discovered: state.accounts.length };
+  },
   discover: async () => {
     const state = await cloudState('Discover all address-linked household services. Do not build the plan yet.');
     return { discovered: state.accounts.length };
@@ -100,6 +104,9 @@ export const moveApi = CLOUD_MODE ? {
     method: 'POST', body: JSON.stringify(input),
   }),
   reset: () => request<MoveState>('/api/demo/reset', { method: 'POST' }),
+  ingestEvidence: (documents: EvidenceDocument[]) => request<{ discovered: number }>('/api/demo/evidence', {
+    method: 'POST', body: JSON.stringify({ documents }),
+  }),
   discover: () => request<{ discovered: number }>('/api/demo/discover', { method: 'POST' }),
   plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/demo/plan', { method: 'POST' }),
   decide: (decisionId: string, optionId: string) => request<DecisionRequest>('/api/demo/decision', {

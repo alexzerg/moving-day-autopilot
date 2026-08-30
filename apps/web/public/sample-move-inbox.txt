@@ -1,0 +1,54 @@
+Provider: Florida Power & Light
+Service: electricity
+Account: 88004123
+Monthly Cost: $148.00
+---
+Provider: City Water Services
+Service: water
+Account: 33020771
+Monthly Cost: $62.00
+---
+Provider: CableNet
+Service: internet
+Account: 55009184
+Monthly Cost: $79.00
+---
+Provider: Sunstate Renters Insurance
+Service: insurance
+Account: 90114438
+Monthly Cost: $24.00
+---
+Provider: USPS Address Service
+Service: postal
+Account: 10003320
+Monthly Cost: $0.00
+---
+Provider: Northstar Payroll
+Service: employer
+Account: 77880042
+Monthly Cost: $0.00
+---
+Provider: Atlantic Bank
+Service: financial
+Account: 22001984
+Monthly Cost: $0.00
+---
+Provider: MobileOne
+Service: mobile
+Account: 44008762
+Monthly Cost: $95.00
+---
+Provider: StreamBox
+Service: subscription
+Account: 99001420
+Monthly Cost: $18.00
+---
+Provider: FitHarbor
+Service: subscription
+Account: 66421800
+Monthly Cost: $42.00
+---
+Provider: ParcelPass
+Service: delivery
+Account: 33130009
+Monthly Cost: $14.00
