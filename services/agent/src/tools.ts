@@ -27,7 +27,7 @@ export function createMovingTools(store: MoveStore) {
 
   const discoverMoveServices = tool({
     name: 'discover_move_services',
-    description: 'Discover address-linked household services from the deterministic demo inbox and account registry.',
+    description: 'Discover address-linked household services from the preloaded sandbox inbox and account registry.',
     inputSchema: z.object({}),
     callback: () => JSON.stringify(store.discoverServices()),
   });

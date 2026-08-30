@@ -1,6 +1,6 @@
 import type { MoveCase, ProviderAccount } from '@moving-day/contracts';
 
-export const demoCase: MoveCase = {
+export const sandboxCase: MoveCase = {
   id: 'move-fl-001',
   householdName: 'Rivera household',
   moveDate: '2026-09-15',
@@ -10,26 +10,26 @@ export const demoCase: MoveCase = {
   preferences: { internetOverlapDays: 2, maximumSetupCost: 150, preserveProvidersWhenPossible: true },
 };
 
-const source = 'https://demo.moving-day.invalid/inbox';
+const source = 'https://inbox.moving-day.local';
 
-export const demoAccounts: ProviderAccount[] = [
-  ['electric', 'Florida Power Demo', 'electricity', 148],
-  ['water', 'Hollywood Water Demo', 'water', 62],
-  ['internet', 'CableNet Demo', 'internet', 79],
-  ['renters', 'Sunstate Renters Demo', 'insurance', 24],
-  ['postal', 'Postal Forwarding Demo', 'postal', 0],
-  ['employer', 'Northstar Payroll Demo', 'employer', 0],
-  ['bank', 'Atlantic Bank Demo', 'financial', 0],
-  ['mobile', 'MobileOne Demo', 'mobile', 95],
-  ['streaming', 'StreamBox Demo', 'subscription', 18],
-  ['gym', 'FitHarbor Demo', 'subscription', 42],
-  ['delivery', 'ParcelPass Demo', 'delivery', 14],
+export const sandboxAccounts: ProviderAccount[] = [
+  ['electric', 'Florida Power & Light', 'electricity', 148],
+  ['water', 'City Water Services', 'water', 62],
+  ['internet', 'CableNet', 'internet', 79],
+  ['renters', 'Sunstate Renters Insurance', 'insurance', 24],
+  ['postal', 'USPS Address Service', 'postal', 0],
+  ['employer', 'Northstar Payroll', 'employer', 0],
+  ['bank', 'Atlantic Bank', 'financial', 0],
+  ['mobile', 'MobileOne', 'mobile', 95],
+  ['streaming', 'StreamBox', 'subscription', 18],
+  ['gym', 'FitHarbor', 'subscription', 42],
+  ['delivery', 'ParcelPass', 'delivery', 14],
 ].map(([id, provider, kind, monthlyCost]) => ({
   id: String(id),
   provider: String(provider),
   kind: kind as ProviderAccount['kind'],
-  accountReference: `DEMO-${String(id).toUpperCase()}-42`,
-  address: demoCase.oldAddress,
+  accountReference: `ACCT-${String(id).toUpperCase()}-42`,
+  address: sandboxCase.oldAddress,
   monthlyCost: Number(monthlyCost),
   state: 'active-old',
   source,

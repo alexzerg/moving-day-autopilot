@@ -3,17 +3,17 @@ import { expect, test } from '@playwright/test';
 import JSZip from 'jszip';
 
 test.beforeEach(async ({ page, request }) => {
-  await request.post('http://127.0.0.1:8787/api/demo/reset');
+  await request.post('http://127.0.0.1:8787/api/sandbox/reset');
   await page.goto('/');
 });
 
 test('complete move cutover reaches a verified zero-gap receipt', async ({ page }) => {
   await expect(page.getByText('STRANDS AGENT · 10 TOOLS')).toBeVisible();
-  await page.getByLabel('New street').fill('900 Demo Way');
+  await page.getByLabel('New street').fill('900 Harbor Way');
   await page.getByLabel('Move date').fill('2026-09-20');
   await page.getByRole('button', { name: 'Apply move details' }).click();
-  await expect(page.getByText(/900 Demo Way/)).toBeVisible();
-  await page.getByRole('button', { name: 'Discover household services' }).click();
+  await expect(page.getByText(/900 Harbor Way/)).toBeVisible();
+  await page.getByRole('button', { name: 'Use sandbox inbox' }).click();
   await expect(page.locator('.service-card')).toHaveCount(11);
 
   await page.getByRole('button', { name: 'Build dependency-safe plan' }).click();
@@ -29,9 +29,9 @@ test('complete move cutover reaches a verified zero-gap receipt', async ({ page 
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('2');
   await expect(page.getByText('Household handoff ready')).toBeVisible();
 
-  await page.getByRole('button', { name: /Update Postal Forwarding Demo/ }).click();
+  await page.getByRole('button', { name: /Update USPS Address Service/ }).click();
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('1');
-  await page.getByRole('button', { name: /Update Atlantic Bank Demo/ }).click();
+  await page.getByRole('button', { name: /Update Atlantic Bank/ }).click();
 
   await expect(page.getByRole('heading', { name: 'Move complete' }).first()).toBeVisible();
   await expect(page.locator('.receipt-grid span').filter({ hasText: 'Identity tasks' })).toContainText('0');
@@ -49,15 +49,13 @@ test('complete move cutover reaches a verified zero-gap receipt', async ({ page 
   expect(files).toContain('provider-confirmations.csv');
   expect(files).toContain('household-tasks.md');
   expect(files).toContain('execution-receipt.json');
-  expect(files).toContain('provider-email-drafts/electric.txt');
+  expect(files).toContain('provider-email-drafts/florida-power-light.txt');
   const calendar = await zip.file('appointments.ics')!.async('text');
   expect(calendar.match(/BEGIN:VEVENT/g)).toHaveLength(14);
 });
 
-test('sample move inbox is converted into discovered services', async ({ page }) => {
-  await page.getByRole('button', { name: 'Load sample inbox' }).click();
-  await expect(page.getByLabel('Or paste bill/email text')).toHaveValue(/Florida Power & Light/);
-  await page.getByRole('button', { name: 'Analyze bills and emails' }).click();
+test('sandbox inbox is converted into discovered services', async ({ page }) => {
+  await page.getByRole('button', { name: 'Use sandbox inbox' }).click();
   await expect(page.locator('.service-card')).toHaveCount(11);
   await expect(page.getByText('Florida Power & Light')).toBeVisible();
   await expect(page.getByText('Atlantic Bank')).toBeVisible();

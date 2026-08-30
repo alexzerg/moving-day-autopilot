@@ -7,4 +7,4 @@
 5. Build the React operator console and decision UI.
 6. Add deterministic end-to-end fixtures and automated tests.
 7. Deploy the UI to Vercel and the agent service to AWS.
-8. Record the demo, publish the repository, and complete the Devpost submission.
+8. Record the walkthrough, publish the repository, and complete the Devpost submission.

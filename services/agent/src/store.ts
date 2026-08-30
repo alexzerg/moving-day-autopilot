@@ -1,6 +1,6 @@
 import { floridaJurisdictionPack, MoveCaseSchema } from '@moving-day/contracts';
 import type { Address, DecisionRequest, EvidenceAccount, MoveAction, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
-import { demoAccounts, demoCase } from './fixtures.js';
+import { sandboxAccounts, sandboxCase } from './fixtures.js';
 
 function offsetDate(date: string, days: number) {
   const value = new Date(`${date}T12:00:00Z`);
@@ -16,7 +16,7 @@ export class MoveStore {
   private state: MoveState;
   private configuredCase: MoveCase;
 
-  constructor(moveCase: MoveCase = demoCase) {
+  constructor(moveCase: MoveCase = sandboxCase) {
     this.configuredCase = clone(moveCase);
     this.state = this.initialState();
   }
@@ -77,7 +77,7 @@ export class MoveStore {
 
   discoverServices() {
     if (this.state.accounts.length === 0) {
-      this.state.accounts = clone(demoAccounts).map((account) => ({ ...account, address: clone(this.state.moveCase.oldAddress) }));
+      this.state.accounts = clone(sandboxAccounts).map((account) => ({ ...account, address: clone(this.state.moveCase.oldAddress) }));
     }
     return { discovered: this.state.accounts.length, accounts: this.snapshot().accounts };
   }

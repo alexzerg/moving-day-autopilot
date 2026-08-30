@@ -5,7 +5,7 @@ moveStore.reset();
 const agent = createMovingAgent();
 
 const planning = await agent.invoke(
-  'Start the demo Florida move. Discover all household services, build the dependency-safe plan, and report only the bounded decision that requires human input. Do not choose or execute anything.',
+  'Start the Florida move sandbox. Discover all household services, build the dependency-safe plan, and report only the bounded decision that requires human input. Do not choose or execute anything.',
 );
 console.log('\n--- PLANNING TURN ---\n');
 console.log(String(planning));

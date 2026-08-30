@@ -50,14 +50,13 @@ export default function App() {
   const [state, setState] = useState<MoveState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activity, setActivity] = useState<string[]>(['Demo case ready. Ask the agent to discover address-linked services.']);
+  const [activity, setActivity] = useState<string[]>(['Move case ready. Ask the agent to discover address-linked services.']);
   const [agentResponse, setAgentResponse] = useState('The cloud agent response will appear here after each operation.');
   const [draftReady, setDraftReady] = useState(false);
   const [moveDraft, setMoveDraft] = useState({
     moveDate: '', oldLine1: '', oldCity: '', oldPostal: '', newLine1: '', newCity: '', newPostal: '',
   });
-  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
-  const [evidenceText, setEvidenceText] = useState('');
+  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null }>({ configured: false, connected: false, email: null });
 
   const refresh = useCallback(async () => setState(await moveApi.state()), []);
   useEffect(() => { refresh().catch((reason: Error) => setError(reason.message)); }, [refresh]);
@@ -65,6 +64,9 @@ export default function App() {
     const onResponse = (event: Event) => setAgentResponse((event as CustomEvent<string>).detail);
     window.addEventListener(AGENT_RESPONSE_EVENT, onResponse);
     return () => window.removeEventListener(AGENT_RESPONSE_EVENT, onResponse);
+  }, []);
+  useEffect(() => {
+    moveApi.gmailStatus().then(setGmail).catch(() => setGmail({ configured: false, connected: false, email: null }));
   }, []);
   useEffect(() => {
     if (!state || draftReady) return;
@@ -99,20 +101,20 @@ export default function App() {
     newAddress: { line1: moveDraft.newLine1, city: moveDraft.newCity, region: 'FL', postalCode: moveDraft.newPostal, country: 'US' },
   }));
 
-  const importEvidence = async () => {
-    const documents = await Promise.all(evidenceFiles.map(async (file) => ({ name: file.name, text: (await file.text()).slice(0, 9000) })));
-    if (evidenceText.trim()) documents.push({ name: 'pasted-move-inbox.txt', text: evidenceText.trim().slice(0, 9000) });
-    if (documents.length === 0) {
-      setError('Upload at least one text/email file or paste service evidence.');
-      return;
-    }
-    await run(`Agent extracted services from ${documents.length} evidence source${documents.length === 1 ? '' : 's'}.`, () => moveApi.ingestEvidence(documents));
+  const scanGmail = async () => {
+    await run('Agent scanned the connected inbox and extracted address-linked services.', moveApi.gmailScan);
   };
 
-  const loadSampleEvidence = async () => {
-    const response = await fetch('/sample-move-inbox.txt');
-    setEvidenceText(await response.text());
-    setActivity((items) => ['Sample move inbox loaded. Review it, then ask the agent to analyze evidence.', ...items].slice(0, 6));
+  const disconnectGmail = async () => {
+    await moveApi.gmailDisconnect();
+    setGmail({ ...gmail, connected: false, email: null });
+    setActivity((items) => ['Gmail disconnected. Stored OAuth cookie removed.', ...items].slice(0, 6));
+  };
+
+  const useSandboxInbox = async () => {
+    const response = await fetch('/sandbox-inbox.txt');
+    const text = await response.text();
+    await run('Agent scanned the sandbox inbox and extracted address-linked services.', () => moveApi.ingestEvidence([{ name: 'sandbox-inbox.txt', text }]));
   };
 
   const exportPacket = async () => {
@@ -134,7 +136,7 @@ export default function App() {
   const automatic = state?.actions.filter((action) => action.risk === 'automatic').length ?? 0;
   const moveDate = state ? new Date(`${state.moveCase.moveDate}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
   const primary = useMemo(() => {
-    if (!state || state.accounts.length === 0) return { label: 'Discover household services', run: () => run('Agent discovered 11 address-linked services.', moveApi.discover) };
+    if (!state || state.accounts.length === 0) return null;
     if (state.actions.length === 0) return { label: 'Build dependency-safe plan', run: () => run('Agent built the Florida move cutover plan.', moveApi.plan) };
     if (decision && !decision.selectedOption) return null;
     if (!state.actions.some((action) => action.status === 'executed' || action.status === 'verified')) return { label: 'Execute approved actions', run: () => run('Agent executed every approved provider action.', () => moveApi.execute(decision?.approvalToken ?? null)) };
@@ -163,7 +165,7 @@ export default function App() {
       </section>
 
       {state.accounts.length === 0 && <section className="move-setup">
-        <div><span className="eyebrow">YOUR MOVE DETAILS</span><h2>Configure the cutover before discovery</h2><p>The public demo supports Florida-to-Florida moves. Change the synthetic values to see the plan recalculate around your date and route.</p></div>
+        <div><span className="eyebrow">YOUR MOVE DETAILS</span><h2>Configure the cutover before discovery</h2><p>The public application supports Florida-to-Florida moves. Change the synthetic values to see the plan recalculate around your date and route.</p></div>
         <div className="setup-fields">
           <label>Move date<input type="date" value={moveDraft.moveDate} onChange={(event) => setMoveDraft({ ...moveDraft, moveDate: event.target.value })} /></label>
           <label>Old street<input value={moveDraft.oldLine1} onChange={(event) => setMoveDraft({ ...moveDraft, oldLine1: event.target.value })} /></label>
@@ -176,9 +178,15 @@ export default function App() {
         </div>
       </section>}
 
-      {state.accounts.length === 0 && <section className="evidence-import">
-        <div><span className="eyebrow">BRING YOUR OWN MOVE INBOX</span><h2>Let the agent discover your providers</h2><p>Upload text-based bills or emails. Account references are masked before they enter move state.</p><button className="sample-button" onClick={loadSampleEvidence}>Load sample inbox</button></div>
-        <div className="evidence-inputs"><label>Files<input type="file" multiple accept=".txt,.eml,.csv,.json,text/plain,message/rfc822,text/csv,application/json" onChange={(event) => setEvidenceFiles(Array.from(event.target.files ?? []))} /></label><label>Or paste bill/email text<textarea rows={5} value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} placeholder="Provider: ...\nService: electricity\nAccount: ...\nMonthly Cost: ..." /></label><button disabled={busy || (evidenceFiles.length === 0 && !evidenceText.trim())} onClick={importEvidence}>Analyze bills and emails</button></div>
+      {state.accounts.length === 0 && <section className="inbox-connect">
+        <div><span className="eyebrow">AUTOMATIC PROVIDER DISCOVERY</span><h2>Connect once. Let the agent find the services.</h2><p>Owner mode scans billing and service messages through read-only Gmail OAuth. Account references are masked before entering move state.</p></div>
+        <div className="inbox-actions">
+          <div className={`gmail-status ${gmail.connected ? 'connected' : ''}`}><span>{gmail.connected ? 'Connected Gmail' : gmail.configured ? 'Gmail ready' : 'Gmail setup pending'}</span><strong>{gmail.email ?? (gmail.connected ? 'Connected account' : 'Read-only access')}</strong></div>
+          {!gmail.connected && <button className="gmail-button" disabled={!gmail.configured} onClick={() => { window.location.href = '/api/auth/google/start'; }}>Connect Gmail</button>}
+          {gmail.connected && <button className="gmail-button" disabled={busy} onClick={scanGmail}>Scan connected inbox</button>}
+          {gmail.connected && <button className="disconnect-button" disabled={busy} onClick={disconnectGmail}>Disconnect</button>}
+          <button className="sandbox-button" disabled={busy} onClick={useSandboxInbox}>Use sandbox inbox</button>
+        </div>
       </section>}
 
       <section className="stages">
@@ -186,7 +194,7 @@ export default function App() {
       </section>
 
       <section className="metrics">
-        <article><span>Services discovered</span><strong>{state.accounts.length}</strong><small>from demo inbox + registry</small></article>
+        <article><span>Services discovered</span><strong>{state.accounts.length}</strong><small>from Gmail or sandbox inbox</small></article>
         <article><span>Planned actions</span><strong>{state.actions.length}</strong><small>{automatic} automatic</small></article>
         <article><span>Human decisions</span><strong>{state.decisions.filter((item) => !item.selectedOption).length}</strong><small>only bounded trade-offs</small></article>
         <article><span>Verified / blocked</span><strong>{verified} / {blocked}</strong><small>{state.receipt ? `${state.receipt.serviceGaps} service gaps` : 'verification pending'}</small></article>
@@ -198,7 +206,7 @@ export default function App() {
         <section className="main-column">
           <article className="panel">
             <div className="panel-title"><div><span className="eyebrow">DISCOVERED ACCOUNTS</span><h2>Address-linked services</h2></div><span>{state.accounts.length || 'Not scanned yet'}</span></div>
-            {state.accounts.length ? <div className="service-grid">{state.accounts.map((account) => <AccountCard key={account.id} account={account} />)}</div> : <div className="empty"><div className="scan-icon">⌕</div><strong>The agent has not inspected the household yet.</strong><span>Discovery uses a deterministic inbox and account-registry fixture.</span></div>}
+            {state.accounts.length ? <div className="service-grid">{state.accounts.map((account) => <AccountCard key={account.id} account={account} />)}</div> : <div className="empty"><div className="scan-icon">⌕</div><strong>No inbox has been scanned yet.</strong><span>Connect Gmail or use the sandbox inbox to discover address-linked services.</span></div>}
           </article>
 
           <article className="panel jurisdiction-card">
@@ -218,7 +226,7 @@ export default function App() {
 
           {state.receipt && <article className="panel packet-card"><span className="eyebrow">TANGIBLE MOVE OUTPUT</span><h2>Download the Move Packet</h2><p>Everything the household needs after the agent finishes.</p><div className="packet-files"><span>PDF plan</span><span>Calendar .ics</span><span>Confirmations .csv</span><span>11 email drafts</span><span>Household tasks</span><span>JSON receipt</span></div><button disabled={busy} onClick={exportPacket}>Download Move Packet .zip</button></article>}
 
-          <article className="panel next-card"><span className="eyebrow">AGENT CONTROL</span>{primary ? <><h2>{primary.label}</h2><p>Safe actions run automatically. Payments, identity and irreversible work stay gated.</p><button className="primary" disabled={busy} onClick={primary.run}>{busy ? 'Working…' : primary.label}</button></> : decision && !decision.selectedOption ? <><h2>Waiting for one decision</h2><p>Choose the internet trade-off above. Every other branch remains ready.</p></> : <><h2>{state.receipt?.blockedActions === 0 ? 'Move complete' : state.receipt ? 'Household handoff ready' : 'Approved plan ready'}</h2><p>{state.receipt?.blockedActions === 0 ? 'Every planned action is verified and no household work remains.' : state.receipt ? `${state.receipt.blockedActions} identity tasks are prepared above; complete them to close the move.` : 'The agent now has the exact token required to execute.'}</p></>}<button className="reset" disabled={busy} onClick={() => run('Demo case reset.', moveApi.reset)}>Reset demo</button></article>
+          <article className="panel next-card"><span className="eyebrow">AGENT CONTROL</span>{primary ? <><h2>{primary.label}</h2><p>Safe actions run automatically. Payments, identity and irreversible work stay gated.</p><button className="primary" disabled={busy} onClick={primary.run}>{busy ? 'Working…' : primary.label}</button></> : state.accounts.length === 0 ? <><h2>Connect an inbox</h2><p>Use read-only Gmail discovery or the sandbox inbox. The agent will find providers before planning anything.</p></> : decision && !decision.selectedOption ? <><h2>Waiting for one decision</h2><p>Choose the internet trade-off above. Every other branch remains ready.</p></> : <><h2>{state.receipt?.blockedActions === 0 ? 'Move complete' : state.receipt ? 'Household handoff ready' : 'Approved plan ready'}</h2><p>{state.receipt?.blockedActions === 0 ? 'Every planned action is verified and no household work remains.' : state.receipt ? `${state.receipt.blockedActions} identity tasks are prepared above; complete them to close the move.` : 'The agent now has the exact token required to execute.'}</p></>}<button className="reset" disabled={busy} onClick={() => run('Move reset.', moveApi.reset)}>Reset move</button></article>
 
           {cloudMode && <article className="panel transcript-card"><span className="eyebrow">LIVE AGENTCORE RESPONSE</span><p>{agentResponse}</p></article>}
           <article className="panel activity-card"><span className="eyebrow">AGENT ACTIVITY</span>{activity.map((item, index) => <div key={`${item}-${index}`}><i className={index === 0 ? 'live' : ''} /><span>{item}</span></div>)}</article>

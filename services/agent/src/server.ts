@@ -25,19 +25,19 @@ function parseEvidenceDocuments(documents: EvidenceDocument[]): EvidenceAccount[
 }
 
 app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 10 }));
-app.get('/api/demo/state', async () => moveStore.snapshot());
-app.post('/api/demo/reset', async () => moveStore.reset());
-app.post<{ Body: { moveDate: string; oldAddress: Address; newAddress: Address } }>('/api/demo/case', async (request) => moveStore.configureMoveCase(request.body));
-app.post<{ Body: { documents: EvidenceDocument[] } }>('/api/demo/evidence', async (request) => moveStore.ingestServiceEvidence(parseEvidenceDocuments(request.body.documents)));
-app.post('/api/demo/discover', async () => moveStore.discoverServices());
-app.post('/api/demo/plan', async () => moveStore.buildPlan());
-app.post<{ Body: { decisionId: string; optionId: string } }>('/api/demo/decision', async (request) => moveStore.approveDecision(request.body.decisionId, request.body.optionId));
-app.post<{ Body: { approvalToken: string | null } }>('/api/demo/execute', async (request) => moveStore.executePlan(request.body.approvalToken));
-app.post<{ Body: { actionId: string; evidence: string } }>('/api/demo/identity', async (request) => {
+app.get('/api/sandbox/state', async () => moveStore.snapshot());
+app.post('/api/sandbox/reset', async () => moveStore.reset());
+app.post<{ Body: { moveDate: string; oldAddress: Address; newAddress: Address } }>('/api/sandbox/case', async (request) => moveStore.configureMoveCase(request.body));
+app.post<{ Body: { documents: EvidenceDocument[] } }>('/api/sandbox/evidence', async (request) => moveStore.ingestServiceEvidence(parseEvidenceDocuments(request.body.documents)));
+app.post('/api/sandbox/discover', async () => moveStore.discoverServices());
+app.post('/api/sandbox/plan', async () => moveStore.buildPlan());
+app.post<{ Body: { decisionId: string; optionId: string } }>('/api/sandbox/decision', async (request) => moveStore.approveDecision(request.body.decisionId, request.body.optionId));
+app.post<{ Body: { approvalToken: string | null } }>('/api/sandbox/execute', async (request) => moveStore.executePlan(request.body.approvalToken));
+app.post<{ Body: { actionId: string; evidence: string } }>('/api/sandbox/identity', async (request) => {
   const action = moveStore.completeIdentityAction(request.body.actionId, request.body.evidence);
   return { action, receipt: moveStore.verifyMove() };
 });
-app.post('/api/demo/verify', async () => moveStore.verifyMove());
+app.post('/api/sandbox/verify', async () => moveStore.verifyMove());
 app.post<{ Body: { prompt: string } }>('/api/agent', async (request, reply) => {
   if (process.env.ENABLE_LLM !== 'true') {
     return reply.code(503).send({ error: 'LLM invocation is disabled. Set ENABLE_LLM=true with a configured Strands model provider.' });

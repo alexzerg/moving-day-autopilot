@@ -48,12 +48,22 @@ async function invokeCloud(prompt: string, publishResponse = true) {
     throw new Error(body.error ?? `Cloud agent failed: ${response.status}`);
   }
   const result = await response.json() as { text: string; state: MoveState; sessionId: string };
+  latestCloudState = result.state;
   if (publishResponse) window.dispatchEvent(new CustomEvent(AGENT_RESPONSE_EVENT, { detail: result.text }));
   return result;
 }
 
 async function cloudState(prompt: string, publishResponse = true) {
   return (await invokeCloud(prompt, publishResponse)).state;
+}
+
+async function gmailRequest<T>(path: string, init?: RequestInit) {
+  const response = await fetch(path, init);
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? `Gmail request failed: ${response.status}`);
+  }
+  return response.json() as Promise<T>;
 }
 
 export const moveApi = CLOUD_MODE ? {
@@ -64,7 +74,17 @@ export const moveApi = CLOUD_MODE ? {
   },
   reset: () => {
     localStorage.setItem(SESSION_KEY, createSessionId());
-    return cloudState('Call get_move_state and return the new untouched demo case without changing anything.');
+    return cloudState('Call get_move_state and return the new untouched move case without changing anything.');
+  },
+  gmailStatus: () => gmailRequest<{ configured: boolean; connected: boolean; email: string | null }>('/api/gmail/status'),
+  gmailDisconnect: () => gmailRequest<{ connected: boolean }>('/api/gmail/disconnect', { method: 'POST' }),
+  gmailScan: async () => {
+    const result = await gmailRequest<{ text: string; state: MoveState; sessionId: string }>('/api/gmail/scan', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: sessionId() }),
+    });
+    latestCloudState = result.state;
+    window.dispatchEvent(new CustomEvent(AGENT_RESPONSE_EVENT, { detail: result.text }));
+    return { discovered: result.state.accounts.length };
   },
   ingestEvidence: async (documents: EvidenceDocument[]) => {
     const state = await cloudState(`Extract only explicit service-account facts from these documents and call ingest_service_evidence. Do not invent missing values. Evidence: ${JSON.stringify(documents)}`);
@@ -99,24 +119,27 @@ export const moveApi = CLOUD_MODE ? {
     return state.receipt;
   },
 } : {
-  state: () => request<MoveState>('/api/demo/state'),
-  configure: (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => request<MoveCase>('/api/demo/case', {
+  state: () => request<MoveState>('/api/sandbox/state'),
+  configure: (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => request<MoveCase>('/api/sandbox/case', {
     method: 'POST', body: JSON.stringify(input),
   }),
-  reset: () => request<MoveState>('/api/demo/reset', { method: 'POST' }),
-  ingestEvidence: (documents: EvidenceDocument[]) => request<{ discovered: number }>('/api/demo/evidence', {
+  reset: () => request<MoveState>('/api/sandbox/reset', { method: 'POST' }),
+  gmailStatus: async () => ({ configured: false, connected: false, email: null }),
+  gmailDisconnect: async () => ({ connected: false }),
+  gmailScan: async () => { throw new Error('Gmail connection is available in the production application.'); },
+  ingestEvidence: (documents: EvidenceDocument[]) => request<{ discovered: number }>('/api/sandbox/evidence', {
     method: 'POST', body: JSON.stringify({ documents }),
   }),
-  discover: () => request<{ discovered: number }>('/api/demo/discover', { method: 'POST' }),
-  plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/demo/plan', { method: 'POST' }),
-  decide: (decisionId: string, optionId: string) => request<DecisionRequest>('/api/demo/decision', {
+  discover: () => request<{ discovered: number }>('/api/sandbox/discover', { method: 'POST' }),
+  plan: () => request<{ actions: MoveState['actions']; decisions: DecisionRequest[] }>('/api/sandbox/plan', { method: 'POST' }),
+  decide: (decisionId: string, optionId: string) => request<DecisionRequest>('/api/sandbox/decision', {
     method: 'POST', body: JSON.stringify({ decisionId, optionId }),
   }),
-  completeIdentity: (actionId: string) => request<{ action: MoveState['actions'][number]; receipt: MoveReceipt }>('/api/demo/identity', {
+  completeIdentity: (actionId: string) => request<{ action: MoveState['actions'][number]; receipt: MoveReceipt }>('/api/sandbox/identity', {
     method: 'POST', body: JSON.stringify({ actionId, evidence: `UI-CONFIRMED-${actionId}` }),
   }),
-  execute: (approvalToken: string | null) => request<{ status: string; reason?: string }>('/api/demo/execute', {
+  execute: (approvalToken: string | null) => request<{ status: string; reason?: string }>('/api/sandbox/execute', {
     method: 'POST', body: JSON.stringify({ approvalToken }),
   }),
-  verify: () => request<MoveReceipt>('/api/demo/verify', { method: 'POST' }),
+  verify: () => request<MoveReceipt>('/api/sandbox/verify', { method: 'POST' }),
 };
