@@ -1,6 +1,6 @@
 import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
-import { AddressSchema, EvidenceAccountSchema, floridaJurisdictionPack } from '@moving-day/contracts';
+import { AddressSchema, EvidenceAccountSchema, floridaJurisdictionPack, PhysicalMoveProfileSchema } from '@moving-day/contracts';
 import { MoveStore, moveStore } from './store.js';
 
 export function createMovingTools(store: MoveStore) {
@@ -18,9 +18,16 @@ export function createMovingTools(store: MoveStore) {
     callback: (input) => JSON.stringify(store.configureMoveCase(input)),
   });
 
+  const estimateMoveRequirements = tool({
+    name: 'estimate_move_requirements',
+    description: 'Calculate expected and P90 household volume, weight range, truck recommendations, and loading/unloading labor from household and inventory details.',
+    inputSchema: PhysicalMoveProfileSchema,
+    callback: (input) => JSON.stringify(store.configurePhysicalMove(input)),
+  });
+
   const ingestServiceEvidence = tool({
     name: 'ingest_service_evidence',
-    description: 'Store service accounts extracted from user-supplied bills or emails. Use only facts present in the evidence and preserve the source filename.',
+    description: 'Store service accounts extracted from Gmail or the sandbox inbox. Use only facts present in evidence, preserve the source name and include the service address so the store can independently match the configured old address.',
     inputSchema: z.object({ accounts: z.array(EvidenceAccountSchema).min(1).max(30) }),
     callback: ({ accounts }) => JSON.stringify(store.ingestServiceEvidence(accounts)),
   });
@@ -74,7 +81,7 @@ export function createMovingTools(store: MoveStore) {
     callback: () => JSON.stringify(store.verifyMove()),
   });
 
-  return [getJurisdictionPack, configureMoveCase, ingestServiceEvidence, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, recordIdentityCompletion, verifyMoveCompletion];
+  return [getJurisdictionPack, configureMoveCase, estimateMoveRequirements, ingestServiceEvidence, discoverMoveServices, buildMovePlan, getMoveState, approveMoveDecision, executeMovePlan, recordIdentityCompletion, verifyMoveCompletion];
 }
 
 export const movingTools = createMovingTools(moveStore);

@@ -1,5 +1,5 @@
 import cors from '@fastify/cors';
-import type { Address, EvidenceAccount, EvidenceDocument, ServiceKind } from '@moving-day/contracts';
+import type { Address, EvidenceAccount, EvidenceDocument, PhysicalMoveProfile, ServiceKind } from '@moving-day/contracts';
 import Fastify from 'fastify';
 import { createMovingAgent } from './agent.js';
 import { moveStore } from './store.js';
@@ -18,16 +18,18 @@ function parseEvidenceDocuments(documents: EvidenceDocument[]): EvidenceAccount[
     const provider = field('Provider');
     const kind = field('Service') as ServiceKind | undefined;
     const accountReference = field('Account');
+    const serviceAddress = field('Service Address');
     const monthlyCost = Number(field('Monthly Cost')?.replace(/[^0-9.]/g, ''));
-    if (!provider || !kind || !serviceKinds.has(kind) || !accountReference || !Number.isFinite(monthlyCost)) return [];
-    return [{ provider, kind, accountReference, monthlyCost, sourceName: document.name }];
+    if (!provider || !kind || !serviceKinds.has(kind) || !accountReference || !serviceAddress || !Number.isFinite(monthlyCost)) return [];
+    return [{ provider, kind, accountReference, monthlyCost, serviceAddress, sourceName: document.name }];
   }));
 }
 
-app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 10 }));
+app.get('/health', async () => ({ status: 'ok', runtime: 'strands-typescript', tools: 11 }));
 app.get('/api/sandbox/state', async () => moveStore.snapshot());
 app.post('/api/sandbox/reset', async () => moveStore.reset());
 app.post<{ Body: { moveDate: string; oldAddress: Address; newAddress: Address } }>('/api/sandbox/case', async (request) => moveStore.configureMoveCase(request.body));
+app.post<{ Body: PhysicalMoveProfile }>('/api/sandbox/physical', async (request) => moveStore.configurePhysicalMove(request.body));
 app.post<{ Body: { documents: EvidenceDocument[] } }>('/api/sandbox/evidence', async (request) => moveStore.ingestServiceEvidence(parseEvidenceDocuments(request.body.documents)));
 app.post('/api/sandbox/discover', async () => moveStore.discoverServices());
 app.post('/api/sandbox/plan', async () => moveStore.buildPlan());

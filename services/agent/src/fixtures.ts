@@ -1,4 +1,4 @@
-import type { MoveCase, ProviderAccount } from '@moving-day/contracts';
+import type { MoveCase, PhysicalMoveProfile, ProviderAccount } from '@moving-day/contracts';
 
 export const sandboxCase: MoveCase = {
   id: 'move-fl-001',
@@ -8,6 +8,15 @@ export const sandboxCase: MoveCase = {
   newAddress: { line1: '800 Bay Avenue', city: 'Miami', region: 'FL', postalCode: '33130', country: 'US' },
   jurisdiction: 'US-FL',
   preferences: { internetOverlapDays: 2, maximumSetupCost: 150, preserveProvidersWhenPossible: true },
+};
+
+export const sandboxPhysicalProfile: PhysicalMoveProfile = {
+  household: 'two-adults-two-children',
+  bedrooms: 2,
+  crewSize: 2,
+  originAccess: 'elevator',
+  destinationAccess: 'ground',
+  inventory: { sofas: 2, beds: 3, dressers: 3, tables: 1, desks: 2, appliances: 3, boxes: 55 },
 };
 
 const source = 'https://inbox.moving-day.local';

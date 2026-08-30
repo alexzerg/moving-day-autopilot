@@ -1,4 +1,4 @@
-import type { Address, DecisionRequest, EvidenceDocument, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
+import type { Address, DecisionRequest, EvidenceDocument, MoveCase, MoveReceipt, MoveState, PhysicalMoveProfile } from '@moving-day/contracts';
 
 const API_BASE = import.meta.env.VITE_AGENT_API_URL ?? 'http://127.0.0.1:8787';
 const CLOUD_MODE = import.meta.env.VITE_AGENT_MODE === 'cloud';
@@ -72,6 +72,10 @@ export const moveApi = CLOUD_MODE ? {
     const state = await cloudState(`Configure the move case with this exact JSON, then return the untouched configured state: ${JSON.stringify(input)}`);
     return state.moveCase;
   },
+  estimatePhysical: async (input: PhysicalMoveProfile) => {
+    const state = await cloudState(`Call estimate_move_requirements with this exact household and inventory profile, then summarize volume, weight, truck and labor: ${JSON.stringify(input)}`);
+    return state.moveEstimate;
+  },
   reset: () => {
     localStorage.setItem(SESSION_KEY, createSessionId());
     return cloudState('Call get_move_state and return the new untouched move case without changing anything.');
@@ -87,7 +91,7 @@ export const moveApi = CLOUD_MODE ? {
     return { discovered: result.state.accounts.length };
   },
   ingestEvidence: async (documents: EvidenceDocument[]) => {
-    const state = await cloudState(`Extract only explicit service-account facts from these documents and call ingest_service_evidence. Do not invent missing values. Evidence: ${JSON.stringify(documents)}`);
+    const state = await cloudState(`Call get_move_state first. Extract only explicit service-account facts whose service address matches the configured old address, then call ingest_service_evidence. Ignore other addresses and do not invent missing values. Evidence: ${JSON.stringify(documents)}`);
     return { discovered: state.accounts.length };
   },
   discover: async () => {
@@ -123,6 +127,9 @@ export const moveApi = CLOUD_MODE ? {
   configure: (input: { moveDate: string; oldAddress: Address; newAddress: Address }) => request<MoveCase>('/api/sandbox/case', {
     method: 'POST', body: JSON.stringify(input),
   }),
+  estimatePhysical: (input: PhysicalMoveProfile) => request<{ estimate: MoveState['moveEstimate'] }>('/api/sandbox/physical', {
+    method: 'POST', body: JSON.stringify(input),
+  }).then((result) => result.estimate),
   reset: () => request<MoveState>('/api/sandbox/reset', { method: 'POST' }),
   gmailStatus: async () => ({ configured: false, connected: false, email: null }),
   gmailDisconnect: async () => ({ connected: false }),

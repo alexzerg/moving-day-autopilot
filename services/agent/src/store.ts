@@ -1,6 +1,6 @@
-import { floridaJurisdictionPack, MoveCaseSchema } from '@moving-day/contracts';
-import type { Address, DecisionRequest, EvidenceAccount, MoveAction, MoveCase, MoveReceipt, MoveState } from '@moving-day/contracts';
-import { sandboxAccounts, sandboxCase } from './fixtures.js';
+import { calculateMoveEstimate, floridaJurisdictionPack, MoveCaseSchema, PhysicalMoveProfileSchema } from '@moving-day/contracts';
+import type { Address, DecisionRequest, EvidenceAccount, MoveAction, MoveCase, MoveReceipt, MoveState, PhysicalMoveProfile } from '@moving-day/contracts';
+import { sandboxAccounts, sandboxCase, sandboxPhysicalProfile } from './fixtures.js';
 
 function offsetDate(date: string, days: number) {
   const value = new Date(`${date}T12:00:00Z`);
@@ -15,14 +15,21 @@ function clone<T>(value: T): T {
 export class MoveStore {
   private state: MoveState;
   private configuredCase: MoveCase;
+  private configuredPhysicalProfile: PhysicalMoveProfile;
 
-  constructor(moveCase: MoveCase = sandboxCase) {
+  constructor(moveCase: MoveCase = sandboxCase, physicalProfile: PhysicalMoveProfile = sandboxPhysicalProfile) {
     this.configuredCase = clone(moveCase);
+    this.configuredPhysicalProfile = clone(physicalProfile);
     this.state = this.initialState();
   }
 
   private initialState(): MoveState {
-    return { moveCase: clone(this.configuredCase), accounts: [], actions: [], decisions: [], receipt: null };
+    return {
+      moveCase: clone(this.configuredCase),
+      accounts: [], actions: [], decisions: [], receipt: null,
+      physicalProfile: clone(this.configuredPhysicalProfile),
+      moveEstimate: calculateMoveEstimate(this.configuredPhysicalProfile),
+    };
   }
 
   reset() {
@@ -50,10 +57,25 @@ export class MoveStore {
     return clone(configured);
   }
 
+  configurePhysicalMove(input: PhysicalMoveProfile) {
+    const profile = PhysicalMoveProfileSchema.parse(input);
+    this.configuredPhysicalProfile = clone(profile);
+    this.state.physicalProfile = clone(profile);
+    this.state.moveEstimate = calculateMoveEstimate(profile);
+    return { profile: clone(profile), estimate: clone(this.state.moveEstimate) };
+  }
+
   ingestServiceEvidence(evidence: EvidenceAccount[]) {
     if (evidence.length === 0) throw new Error('No service accounts were extracted from the supplied evidence');
+    const normalizedOldStreet = this.state.moveCase.oldAddress.line1.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const oldPostal = this.state.moveCase.oldAddress.postalCode.replace(/\D/g, '');
+    const matched = evidence.filter((item) => {
+      const serviceAddress = item.serviceAddress.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return serviceAddress.includes(normalizedOldStreet) && serviceAddress.includes(oldPostal);
+    });
+    if (matched.length === 0) throw new Error('No service accounts matched the configured old address');
     const used = new Set<string>();
-    this.state.accounts = evidence.map((item, index) => {
+    this.state.accounts = matched.map((item, index) => {
       const base = item.provider.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `service-${index + 1}`;
       let id = base;
       while (used.has(id)) id = `${base}-${index + 1}`;
@@ -72,7 +94,7 @@ export class MoveStore {
     this.state.actions = [];
     this.state.decisions = [];
     this.state.receipt = null;
-    return { discovered: this.state.accounts.length, accounts: clone(this.state.accounts) };
+    return { discovered: this.state.accounts.length, rejectedAddressMismatches: evidence.length - matched.length, accounts: clone(this.state.accounts) };
   }
 
   discoverServices() {

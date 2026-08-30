@@ -95,6 +95,11 @@ async function buildPdf(state: MoveState) {
   line('Execution summary', 13, true);
   line(`${state.accounts.length} services · ${state.actions.length} actions · ${state.receipt?.verifiedActions ?? 0} verified · ${state.receipt?.blockedActions ?? 0} remaining · ${state.receipt?.serviceGaps ?? 0} service gaps`);
   y += 8;
+  line('Physical move estimate', 13, true);
+  line(`${state.moveEstimate.expectedVolumeCuFt} cu ft expected · P90 ${state.moveEstimate.p90VolumeCuFt} cu ft · ${state.moveEstimate.estimatedWeightLb.low.toLocaleString()}–${state.moveEstimate.estimatedWeightLb.high.toLocaleString()} lb`);
+  line(`${state.moveEstimate.trucks.map((truck) => `${truck.provider} ${truck.vehicle} (${truck.bufferPct}% buffer)`).join(' · ')}`);
+  line(`${state.moveEstimate.laborHours.crewSize} movers · ${state.moveEstimate.laborHours.loading}h loading · ${state.moveEstimate.laborHours.unloading}h unloading`);
+  y += 8;
   line('Provider schedule', 13, true);
   for (const action of state.actions) {
     const provider = state.accounts.find((item) => item.id === action.accountId)?.provider ?? action.accountId;

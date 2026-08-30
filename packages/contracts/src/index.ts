@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MoveEstimate, PhysicalMoveProfile } from './volume.js';
 
 export const ServiceKindSchema = z.enum([
   'electricity',
@@ -56,6 +57,7 @@ export const EvidenceAccountSchema = z.object({
   accountReference: z.string().min(1),
   monthlyCost: z.number().nonnegative(),
   sourceName: z.string().min(1),
+  serviceAddress: z.string().min(1),
 });
 export type EvidenceAccount = z.infer<typeof EvidenceAccountSchema>;
 
@@ -140,6 +142,9 @@ export interface MoveState {
   actions: MoveAction[];
   decisions: DecisionRequest[];
   receipt: MoveReceipt | null;
+  physicalProfile: PhysicalMoveProfile;
+  moveEstimate: MoveEstimate;
 }
 
 export { floridaJurisdictionPack } from './florida.js';
+export * from './volume.js';

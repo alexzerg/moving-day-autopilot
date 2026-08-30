@@ -6,7 +6,7 @@
 
 Moving-Day Autopilot is a jurisdiction-aware Strands agent that completes the administrative cutover of a household move across utilities, internet, insurance, address records, appointments, deposits, and final bills.
 
-The agent runs the repetitive work in the background and interrupts the household only when a decision materially affects cost, service continuity, identity, or an irreversible cancellation. Owner mode uses explicit read-only Gmail OAuth to discover billing and service messages automatically; judges can use the preloaded sandbox inbox without credentials. Nova extracts only explicit provider facts and account references are masked before entering move state. The agent never marks blocked work as complete.
+The agent runs the repetitive work in the background and interrupts the household only when a decision materially affects cost, service continuity, identity, or an irreversible cancellation. Owner mode uses explicit read-only Gmail OAuth to discover billing and service messages automatically; judges can use the preloaded sandbox inbox without credentials. Nova must find an explicit service address matching the configured old address, so historical accounts at prior addresses are excluded. Account references are masked before entering move state. The agent never marks blocked work as complete.
 
 ## Reference outcome
 
@@ -35,18 +35,31 @@ The public application uses two Vercel services behind one domain:
 
 The bridge has no AWS access keys. Its IAM role can invoke only the exact Moving-Day AgentCore runtime. The runtime hosts a session-isolated Strands agent backed by Amazon Nova 2 Lite and deterministic stateful provider adapters.
 
+## Physical move planning
+
+Before administrative cutover, the household selects a visual family profile and records bedrooms, access constraints, crew size, furniture, appliances, and boxes. A shared calculator used by both the UI and Strands produces:
+
+- expected and P90 volume;
+- weight range;
+- recommended truck capacity with buffer risk;
+- U-Haul and Penske vehicle recommendations;
+- loading and unloading ranges by crew and building access.
+
+Household composition seeds the box estimate; actual furniture drives the majority of volume. The calculation is explicitly a planning range, not a guaranteed quote. Truck capacities are based on the published provider fleets.
+
 ## Agent lifecycle
 
 1. Read the versioned jurisdiction pack and official sources.
-2. Discover address-linked services from the inbox and account registry.
-3. Build a dependency-aware cutover plan.
-4. Continue automatic branches while surfacing one bounded provider decision.
-5. Reject approval-gated actions without the exact human decision token.
-6. Execute authorized provider actions.
-7. Read provider state back and classify every action as verified, blocked, or failed.
-8. Prepare identity-only tasks for explicit household completion.
-9. Record human evidence, verify again, and produce a final move receipt with no hidden work.
-10. Export a Move Packet containing a PDF schedule, calendar, confirmations, provider drafts, household tasks, and JSON receipt.
+2. Configure household composition and inventory, then estimate volume, weight, truck and labor.
+3. Discover only services whose evidence address matches the configured old address.
+4. Build a dependency-aware cutover plan.
+5. Continue automatic branches while surfacing one bounded provider decision.
+6. Reject approval-gated actions without the exact human decision token.
+7. Execute authorized provider actions.
+8. Read provider state back and classify every action as verified, blocked, or failed.
+9. Prepare identity-only tasks for explicit household completion.
+10. Record human evidence, verify again, and produce a final move receipt with no hidden work.
+11. Export a Move Packet containing a PDF schedule, calendar, confirmations, provider drafts, household tasks, and JSON receipt.
 
 ## Tangible household output
 
@@ -65,7 +78,8 @@ After verification, the browser generates a ZIP archive containing:
 |---|---|
 | `get_jurisdiction_pack` | Read versioned rules, sources, supported services, and identity boundaries |
 | `configure_move_case` | Set the household's move date and Florida addresses |
-| `ingest_service_evidence` | Store providers extracted from Gmail or the sandbox inbox |
+| `estimate_move_requirements` | Calculate P50/P90 volume, weight, truck capacity and labor |
+| `ingest_service_evidence` | Store only providers whose service address matches the configured old address |
 | `discover_move_services` | Discover the preloaded sandbox services when no evidence is supplied |
 | `build_move_plan` | Build the dependency-safe administrative cutover |
 | `get_move_state` | Read the authoritative session state |

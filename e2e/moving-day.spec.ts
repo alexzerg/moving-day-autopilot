@@ -8,7 +8,10 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test('complete move cutover reaches a verified zero-gap receipt', async ({ page }) => {
-  await expect(page.getByText('STRANDS AGENT · 10 TOOLS')).toBeVisible();
+  await expect(page.getByText('STRANDS AGENT · 11 TOOLS')).toBeVisible();
+  await page.getByRole('button', { name: /Two adults \+ 3 children/ }).click();
+  await page.getByRole('button', { name: 'Calculate move requirements' }).click();
+  await expect(page.locator('.estimate-strip')).toContainText('62 boxes');
   await page.getByLabel('New street').fill('900 Harbor Way');
   await page.getByLabel('Move date').fill('2026-09-20');
   await page.getByRole('button', { name: 'Apply move details' }).click();

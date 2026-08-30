@@ -44,10 +44,12 @@ describe('move lifecycle', () => {
 
   it('ingests real service evidence and masks account references', () => {
     const result = store.ingestServiceEvidence([
-      { provider: 'Test Electric', kind: 'electricity', accountReference: '123456789', monthlyCost: 121.5, sourceName: 'electric-bill.eml' },
-      { provider: 'Test Fiber', kind: 'internet', accountReference: 'ABC-9988', monthlyCost: 65, sourceName: 'fiber.csv' },
+      { provider: 'Test Electric', kind: 'electricity', accountReference: '123456789', monthlyCost: 121.5, sourceName: 'electric-bill.eml', serviceAddress: '100 Harbor Lane, Hollywood, FL 33020' },
+      { provider: 'Test Fiber', kind: 'internet', accountReference: 'ABC-9988', monthlyCost: 65, sourceName: 'fiber.csv', serviceAddress: '100 Harbor Lane, Hollywood, FL 33020' },
+      { provider: 'Old Address Electric', kind: 'electricity', accountReference: '44556677', monthlyCost: 88, sourceName: 'old-bill.eml', serviceAddress: '55 Previous Street, Miami, FL 33101' },
     ]);
     expect(result.discovered).toBe(2);
+    expect(result.rejectedAddressMismatches).toBe(1);
     expect(result.accounts[0].accountReference).toBe('••••6789');
     expect(result.accounts[1].source).toContain('fiber.csv');
   });

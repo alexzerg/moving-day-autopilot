@@ -3,6 +3,7 @@ import { floridaJurisdictionPack } from '@moving-day/contracts';
 import type { MoveAction, MoveState, ProviderAccount } from '@moving-day/contracts';
 import { AGENT_RESPONSE_EVENT, moveApi, readLatestCloudState } from './api';
 import { downloadMovePacket } from './packet';
+import PhysicalPlanner from './PhysicalPlanner';
 import './App.css';
 
 const kindIcon: Record<string, string> = {
@@ -112,9 +113,10 @@ export default function App() {
   };
 
   const useSandboxInbox = async () => {
+    if (!state) return;
     const response = await fetch('/sandbox-inbox.txt');
-    const text = await response.text();
-    await run('Agent scanned the sandbox inbox and extracted address-linked services.', () => moveApi.ingestEvidence([{ name: 'sandbox-inbox.txt', text }]));
+    const text = (await response.text()).replaceAll('100 Harbor Lane, Hollywood, FL 33020', addressLine(state.moveCase.oldAddress));
+    await run('Agent scanned the sandbox inbox and extracted services matching the configured old address.', () => moveApi.ingestEvidence([{ name: 'sandbox-inbox.txt', text }]));
   };
 
   const exportPacket = async () => {
@@ -150,7 +152,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="mark">↗</div><div><strong>Moving-Day Autopilot</strong><span>Jurisdiction-aware household cutover</span></div></div>
-        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 10 TOOLS' : 'LOCAL STRANDS AGENT · 10 TOOLS'}</div>
+        <div className="runtime"><i /> {cloudMode ? 'AWS AGENTCORE · STRANDS · 11 TOOLS' : 'LOCAL STRANDS AGENT · 11 TOOLS'}</div>
       </header>
 
       <section className="hero">
@@ -177,6 +179,8 @@ export default function App() {
           <button disabled={busy || !moveDraft.moveDate || !moveDraft.oldLine1 || !moveDraft.newLine1} onClick={configureMove}>Apply move details</button>
         </div>
       </section>}
+
+      <PhysicalPlanner profile={state.physicalProfile} estimate={state.moveEstimate} busy={busy} onApply={(profile) => run('Agent recalculated volume, truck and labor requirements.', () => moveApi.estimatePhysical(profile))} />
 
       {state.accounts.length === 0 && <section className="inbox-connect">
         <div><span className="eyebrow">AUTOMATIC PROVIDER DISCOVERY</span><h2>Connect once. Let the agent find the services.</h2><p>Owner mode scans billing and service messages through read-only Gmail OAuth. Account references are masked before entering move state.</p></div>

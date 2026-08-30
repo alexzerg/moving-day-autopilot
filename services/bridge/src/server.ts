@@ -256,7 +256,7 @@ app.post('/api/gmail/scan', async (request, response) => {
       documents.push({ name: `${headers.subject ?? 'message'}-${item.id}.eml`, text });
     }
     if (documents.length === 0) return response.status(404).json({ error: 'No billing or service messages were found.' });
-    const prompt = `Extract only explicit household service accounts from these Gmail messages and call ingest_service_evidence. Do not invent missing providers, account references, service types, or costs. Preserve each source name. Documents: ${JSON.stringify(documents)}`.slice(0, 12_000);
+    const prompt = `Call get_move_state first. Extract only explicit household service accounts from these Gmail messages whose service address matches the configured old address. Ignore prior or future addresses even when the provider name is the same. Require an explicit service address, and do not invent missing providers, references, types, costs or addresses. Preserve each source name, then call ingest_service_evidence. Documents: ${JSON.stringify(documents)}`.slice(0, 12_000);
     return response.json(await invokeAgentCore(prompt, sessionId));
   } catch (error) {
     console.error('Gmail scan failed', error instanceof Error ? error.message : error);
